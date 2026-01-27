@@ -67,3 +67,8 @@ Thumbs.db
 # Optional
 *.log
 .cache/
+
+# Readme
+README.md
+readme.md
+README
