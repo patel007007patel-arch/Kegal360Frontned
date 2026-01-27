@@ -38,6 +38,7 @@ import {
 // Component Imports
 import TableFilters from './TableFilters'
 import AddUserDrawer from './AddUserDrawer'
+import EditUserDialog from '@components/admin/EditUserDialog'
 import OptionMenu from '@core/components/option-menu'
 import CustomAvatar from '@core/components/mui/Avatar'
 import ConfirmationDialog from '@components/admin/ConfirmationDialog'
@@ -103,6 +104,7 @@ const columnHelper = createColumnHelper()
 const UserListTable = ({ tableData, onRefresh }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [rowSelection, setRowSelection] = useState({})
@@ -248,7 +250,13 @@ const UserListTable = ({ tableData, onRefresh }) => {
                 },
                 {
                   text: 'Edit',
-                  icon: 'ri-edit-box-line'
+                  icon: 'ri-edit-box-line',
+                  menuItemProps: {
+                    onClick: () => {
+                      setSelectedUser(row.original)
+                      setEditDialogOpen(true)
+                    }
+                  }
                 }
               ]}
             />
@@ -391,6 +399,12 @@ const UserListTable = ({ tableData, onRefresh }) => {
         open={addUserOpen}
         handleClose={() => setAddUserOpen(!addUserOpen)}
         onRefresh={onRefresh}
+      />
+      <EditUserDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        user={selectedUser}
+        onSuccess={onRefresh}
       />
       <ConfirmationDialog
         open={deleteDialogOpen}

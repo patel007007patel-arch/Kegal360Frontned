@@ -70,7 +70,7 @@ const Logo = ({ color }) => {
         transitionDuration={transitionDuration}
         isBreakpointReached={isBreakpointReached}
       >
-        {themeConfig.templateName}
+        {themeConfig.appName || themeConfig.templateName}
       </LogoText>
     </div>
   )

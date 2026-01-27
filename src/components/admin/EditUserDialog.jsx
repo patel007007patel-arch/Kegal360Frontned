@@ -67,8 +67,8 @@ const EditUserDialog = ({ open, setOpen, user, onSuccess }) => {
     <Dialog open={open} onClose={() => setOpen(false)} maxWidth='sm' fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle>Edit User</DialogTitle>
-        <DialogContent>
-          <div className='flex flex-col gap-4 mts-4'>
+        <DialogContent sx={{ paddingTop: 2, overflow: 'visible' }} className='pbs-6'>
+          <div className='flex flex-col gap-4'>
             <TextField
               fullWidth
               label='Name'
@@ -100,30 +100,6 @@ const EditUserDialog = ({ open, setOpen, user, onSuccess }) => {
                 />
               }
               label='Active'
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.settings.pushNotifications}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    settings: { ...formData.settings, pushNotifications: e.target.checked }
-                  })}
-                />
-              }
-              label='Push Notifications'
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.settings.darkTheme}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    settings: { ...formData.settings, darkTheme: e.target.checked }
-                  })}
-                />
-              }
-              label='Dark Theme'
             />
           </div>
         </DialogContent>

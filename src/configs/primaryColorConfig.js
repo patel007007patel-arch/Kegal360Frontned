@@ -2,9 +2,9 @@
 const primaryColorConfig = [
   {
     name: 'primary-1',
-    light: '#FFB3D9',
-    main: '#FF6BB5', // Main pink color from app
-    dark: '#E55AA0'
+    light: '#F9B5C4',
+    main: '#F59BB1', // Primary color
+    dark: '#E88A9E'
   },
   {
     name: 'primary-2',

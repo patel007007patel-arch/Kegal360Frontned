@@ -117,9 +117,9 @@ const Navigation = props => {
           'data-dark': ''
         })}
     >
-      {/* Nav Header including Logo & nav toggle icons  */}
+      {/* Nav Header: app name + toggle (same height/spacing as reference) */}
       <NavHeader>
-        <Link href={getLocalizedUrl('/', locale)}>
+        <Link href={getLocalizedUrl('/admin/dashboard', locale)}>
           <Logo />
         </Link>
         {!(isCollapsed && !isHovered) && (
@@ -132,6 +132,11 @@ const Navigation = props => {
           />
         )}
       </NavHeader>
+      {!(isCollapsed && !isHovered) && (
+        <div className='ts-vertical-nav-menu-label' aria-hidden>
+          MENU
+        </div>
+      )}
       <StyledBoxForShadow ref={shadowRef} />
       <VerticalMenu dictionary={dictionary} scrollMenu={scrollMenu} />
     </VerticalNav>

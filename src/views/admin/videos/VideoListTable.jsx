@@ -35,6 +35,7 @@ import {
 // Component Imports
 import TableFilters from './TableFilters'
 import AddVideoDrawer from './AddVideoDrawer'
+import EditVideoDialog from '@components/admin/EditVideoDialog'
 import OptionMenu from '@core/components/option-menu'
 import ConfirmationDialog from '@components/admin/ConfirmationDialog'
 import { toast } from 'react-toastify'
@@ -84,6 +85,7 @@ const columnHelper = createColumnHelper()
 const VideoListTable = ({ tableData, onRefresh }) => {
   // States
   const [addVideoOpen, setAddVideoOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [rowSelection, setRowSelection] = useState({})
@@ -217,7 +219,13 @@ const VideoListTable = ({ tableData, onRefresh }) => {
                 },
                 {
                   text: 'Edit',
-                  icon: 'ri-edit-box-line'
+                  icon: 'ri-edit-box-line',
+                  menuItemProps: {
+                    onClick: () => {
+                      setSelectedVideo(row.original)
+                      setEditDialogOpen(true)
+                    }
+                  }
                 }
               ]}
             />
@@ -360,6 +368,12 @@ const VideoListTable = ({ tableData, onRefresh }) => {
         open={addVideoOpen}
         handleClose={() => setAddVideoOpen(!addVideoOpen)}
         onRefresh={onRefresh}
+      />
+      <EditVideoDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        video={selectedVideo}
+        onSuccess={onRefresh}
       />
       <ConfirmationDialog
         open={deleteDialogOpen}

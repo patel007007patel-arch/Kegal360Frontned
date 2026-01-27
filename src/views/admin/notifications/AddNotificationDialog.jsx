@@ -172,13 +172,13 @@ const AddNotificationDialog = props => {
       closeAfterTransition={false}
     >
       <DialogTitle className='flex items-center justify-between'>
-        <Typography variant='h5'>Add New Notification</Typography>
+        <Typography variant='h5' component='span'>Add New Notification</Typography>
         <IconButton size='small' onClick={handleClose} className='absolute inline-end-4 block-start-4'>
           <i className='ri-close-line text-xl' />
         </IconButton>
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <DialogContent className='flex flex-col gap-4'>
+        <DialogContent className='flex flex-col gap-4 pbs-6' sx={{ overflow: 'visible' }}>
           <Grid container spacing={5}>
             <Grid size={{ xs: 12 }}>
               <Typography variant='subtitle2' className='mbe-2'>Recipient Type *</Typography>

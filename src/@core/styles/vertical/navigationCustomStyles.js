@@ -11,8 +11,9 @@ const navigationCustomStyles = (verticalNavOptions, theme) => {
     color: 'var(--mui-palette-text-primary)',
     zIndex: 'var(--drawer-z-index) !important',
     [`& .${verticalNavClasses.header}`]: {
-      paddingBlock: theme.spacing(5),
-      paddingInline: theme.spacing(5.5, 4),
+      minHeight: 64,
+      paddingBlock: 20,
+      paddingInline: theme.spacing(3, 2.5),
       ...(collapsedNotHovered && {
         paddingInline: theme.spacing((collapsedWidth - 42) / 8),
         '& a': {
@@ -22,6 +23,17 @@ const navigationCustomStyles = (verticalNavOptions, theme) => {
       '& a': {
         transition: `transform ${transitionDuration}ms ease`
       }
+    },
+    '& .ts-vertical-nav-menu-label': {
+      fontSize: '0.6875rem',
+      fontWeight: 600,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: 'var(--mui-palette-text-disabled)',
+      paddingBlock: '12px 8px',
+      paddingInline: theme.spacing(3),
+      margin: 0,
+      lineHeight: 1.2
     },
     [`& .${verticalNavClasses.container}`]: {
       transition: theme.transitions.create(['inline-size', 'inset-inline-start', 'box-shadow'], {
@@ -50,8 +62,8 @@ const navigationCustomStyles = (verticalNavOptions, theme) => {
       color: 'var(--mui-palette-text-disabled)'
     },
     [`& .${menuClasses.root}`]: {
-      paddingBlock: theme.spacing(1),
-      paddingInline: theme.spacing(3)
+      paddingBlock: '8px 16px',
+      paddingInline: theme.spacing(2.5)
     },
     [`& .${verticalNavClasses.backdrop}`]: {
       backgroundColor: 'var(--backdrop-color)'

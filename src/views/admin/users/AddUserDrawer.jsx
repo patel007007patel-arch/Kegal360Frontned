@@ -105,7 +105,7 @@ const AddUserDrawer = props => {
         </Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit(data => onSubmit(data))}>
-        <DialogContent className='pbs-0 sm:pbe-6 sm:pli-16'>
+        <DialogContent className='pbs-6 sm:pbe-6 sm:pli-16' sx={{ overflow: 'visible' }}>
           <IconButton onClick={handleReset} className='absolute block-start-4 inline-end-4'>
             <i className='ri-close-line text-textSecondary' />
           </IconButton>

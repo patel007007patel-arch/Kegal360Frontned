@@ -301,9 +301,6 @@ const SubscriptionListTable = ({ tableData, onRefresh }) => {
             placeholder='Search Subscriptions'
             className='max-sm:is-full'
           />
-            <Button variant='contained' className='max-sm:is-full'>
-              Add New Subscription
-            </Button>
         </div>
       </div>
       <div className='overflow-x-auto'>

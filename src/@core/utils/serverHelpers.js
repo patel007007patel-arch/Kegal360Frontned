@@ -41,5 +41,5 @@ export const getServerMode = async () => {
 export const getSkin = async () => {
   const settingsCookie = await getSettingsFromCookie()
 
-  return settingsCookie.skin || 'default'
+  return settingsCookie.skin || themeConfig.skin
 }

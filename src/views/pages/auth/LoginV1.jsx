@@ -53,7 +53,7 @@ const LoginV1 = ({ mode }) => {
           </Link>
           <div className='flex flex-col gap-5'>
             <div>
-              <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
+              <Typography variant='h4'>{`Welcome to ${themeConfig.appName || themeConfig.templateName}! 👋🏻`}</Typography>
               <Typography className='mbs-1'>Please sign-in to your account and start the adventure</Typography>
             </div>
             <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>

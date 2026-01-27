@@ -12,7 +12,7 @@ const menuItemStyles = (verticalNavOptions, theme) => {
     root: ({ level }) => ({
       ...(!isPopoutWhenCollapsed || popoutExpanded || (popoutCollapsed && level === 0)
         ? {
-            marginBlockStart: theme.spacing(1)
+            marginBlockStart: theme.spacing(0.5)
           }
         : {
             marginBlockStart: 0
@@ -44,7 +44,8 @@ const menuItemStyles = (verticalNavOptions, theme) => {
       }
     }),
     button: ({ level, active }) => ({
-      paddingBlock: '8px',
+      minHeight: 44,
+      paddingBlock: '12px',
       ...(!(isCollapsed && !isHovered) && {
         '&:has(.MuiChip-root)': {
           paddingBlock: theme.spacing(1.75)

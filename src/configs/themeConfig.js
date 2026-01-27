@@ -17,10 +17,11 @@
  */
 const themeConfig = {
   templateName: 'Materialize',
-  homePageUrl: '/dashboards/crm',
+  appName: 'K360', // Display name in sidebar (instead of template name)
+  homePageUrl: '/admin/dashboard',
   settingsCookieName: 'materialize-mui-next-demo-1',
   mode: 'system', // 'system', 'light', 'dark'
-  skin: 'default', // 'default', 'bordered'
+  skin: 'bordered', // 'default', 'bordered'
   semiDark: false, // true, false
   layout: 'vertical', // 'vertical', 'collapsed', 'horizontal'
   layoutPadding: 24, // Common padding for header, content, footer layout components (in px)

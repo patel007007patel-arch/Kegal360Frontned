@@ -300,9 +300,6 @@ const GiftListTable = ({ tableData, onRefresh }) => {
             placeholder='Search Gifts'
             className='max-sm:is-full'
           />
-            <Button variant='contained' className='max-sm:is-full'>
-              Add New Gift
-            </Button>
         </div>
       </div>
       <div className='overflow-x-auto'>

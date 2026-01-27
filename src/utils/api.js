@@ -95,23 +95,29 @@ export const adminAPI = {
   },
   createVideo: (formData) => {
     const token = getAuthToken();
-    
+    if (!(formData instanceof FormData) || !formData.has('video')) {
+      return Promise.reject(new Error('Video file is required. Please select a video and try again.'));
+    }
     return fetch(`${API_URL}/admin/videos`, {
       method: 'POST',
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
-        // Don't set Content-Type, let browser set it with boundary for FormData
+        // Do not set Content-Type – browser must set multipart/form-data with boundary
       },
       body: formData,
-    })
-    .then(async (response) => {
-      const data = await response.json();
+    }).then(async (response) => {
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? 'Invalid response from server' : (text || 'Upload failed'));
+      }
       if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+        throw new Error(data.message || `Upload failed (${response.status})`);
       }
       return data;
-    })
-    .catch((error) => {
+    }).catch((error) => {
       console.error('API Error:', error);
       throw error;
     });

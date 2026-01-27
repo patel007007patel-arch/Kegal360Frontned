@@ -21,17 +21,19 @@ const CardStatVertical = props => {
         <CustomAvatar size={avatarSize} variant='rounded' skin={avatarSkin} color={avatarColor}>
           <i className={avatarIcon} />
         </CustomAvatar>
-        <div className='flex items-center'>
-          <Typography color={trend === 'negative' ? 'error.main' : 'success.main'}>
-            {`${trend === 'negative' ? '-' : '+'}${trendNumber}`}
-          </Typography>
-          <i
-            className={classnames(
-              'text-lg',
-              trend === 'negative' ? 'ri-arrow-down-s-line text-error' : 'ri-arrow-up-s-line text-success'
-            )}
-          ></i>
-        </div>
+        {trendNumber != null && String(trendNumber).trim() !== '' && (
+          <div className='flex items-center'>
+            <Typography color={trend === 'negative' ? 'error.main' : 'success.main'}>
+              {`${trend === 'negative' ? '-' : '+'}${trendNumber}`}
+            </Typography>
+            <i
+              className={classnames(
+                'text-lg',
+                trend === 'negative' ? 'ri-arrow-down-s-line text-error' : 'ri-arrow-up-s-line text-success'
+              )}
+            ></i>
+          </div>
+        )}
       </CardContent>
       <CardContent className='flex flex-col items-start gap-4'>
         <div className='flex flex-col flex-wrap gap-1'>

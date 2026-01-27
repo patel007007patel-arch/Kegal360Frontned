@@ -160,7 +160,7 @@ const Login = ({ mode }) => {
         </div>
         <div className='flex flex-col gap-5 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
           <div>
-            <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}!👋🏻`}</Typography>
+            <Typography variant='h4'>{`Welcome to ${themeConfig.appName || themeConfig.templateName}!👋🏻`}</Typography>
             <Typography>Please sign-in to your account and start the adventure</Typography>
           </div>
           {errorState && (

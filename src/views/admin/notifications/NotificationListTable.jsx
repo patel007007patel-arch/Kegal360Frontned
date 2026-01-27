@@ -109,10 +109,13 @@ const NotificationListTable = ({ tableData, onRefresh }) => {
       filtered = filtered.filter(item => item.isRead === (filters.isRead === 'true'))
     }
     if (filters.userId) {
-      filtered = filtered.filter(item => 
-        item.user?.toLowerCase().includes(filters.userId.toLowerCase()) ||
-        item.userEmail?.toLowerCase().includes(filters.userId.toLowerCase())
-      )
+      const q = filters.userId.toLowerCase()
+      filtered = filtered.filter(item => {
+        const user = item.user
+        const userStr = typeof user === 'object' && user !== null ? (user.name || user.email || '') : (user || '')
+        const email = typeof user === 'object' && user !== null ? (user.email || '') : (item.userEmail || '')
+        return (userStr && String(userStr).toLowerCase().includes(q)) || (email && String(email).toLowerCase().includes(q))
+      })
     }
 
     setFilteredData(filtered)
@@ -181,18 +184,24 @@ const NotificationListTable = ({ tableData, onRefresh }) => {
       },
       columnHelper.accessor('user', {
         header: 'User',
-        cell: ({ row }) => (
-          <div className='flex flex-col'>
-            <Typography color='text.primary' className='font-medium'>
-              {row.original.user || 'N/A'}
-            </Typography>
-            {row.original.userEmail && (
-              <Typography variant='body2' color='text.secondary'>
-                {row.original.userEmail}
+        cell: ({ row }) => {
+          const user = row.original.user
+          const userEmail = row.original.userEmail
+          const name = typeof user === 'object' && user !== null ? (user.name || user.email || 'N/A') : (user || 'N/A')
+          const email = typeof user === 'object' && user !== null ? (user.email || '') : (userEmail || '')
+          return (
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {name}
               </Typography>
-            )}
-          </div>
-        )
+              {email && (
+                <Typography variant='body2' color='text.secondary'>
+                  {email}
+                </Typography>
+              )}
+            </div>
+          )
+        }
       }),
       columnHelper.accessor('type', {
         header: 'Type',
@@ -314,24 +323,35 @@ const NotificationListTable = ({ tableData, onRefresh }) => {
 
   return (
     <Card>
-      <CardHeader
-        title='Notifications'
-        subheader='Manage all user notifications'
-        action={
-          <div className='flex items-center gap-4'>
-            <Button
-              variant='contained'
-              startIcon={<i className='ri-add-line' />}
-              onClick={() => setAddDialogOpen(true)}
-            >
-              Add New Notification
-            </Button>
-          </div>
-        }
-      />
-      <Divider />
+      <CardHeader title='Filters' className='pbe-4' />
       <TableFilters filters={filters} setFilters={setFilters} />
       <Divider />
+      <div className='flex justify-between gap-4 p-5 flex-col items-start sm:flex-row sm:items-center'>
+        <Button
+          color='secondary'
+          variant='outlined'
+          startIcon={<i className='ri-upload-2-line' />}
+          className='max-sm:is-full'
+        >
+          Export
+        </Button>
+        <div className='flex items-center gap-x-4 max-sm:gap-y-4 flex-col max-sm:is-full sm:flex-row'>
+          <DebouncedInput
+            value={globalFilter ?? ''}
+            onChange={value => setGlobalFilter(String(value))}
+            placeholder='Search Notifications'
+            className='max-sm:is-full'
+          />
+          <Button
+            variant='contained'
+            startIcon={<i className='ri-add-line' />}
+            onClick={() => setAddDialogOpen(true)}
+            className='max-sm:is-full'
+          >
+            Add New Notification
+          </Button>
+        </div>
+      </div>
       <div className='overflow-x-auto'>
         <table className={tableStyles.table}>
           <thead>
@@ -359,31 +379,37 @@ const NotificationListTable = ({ tableData, onRefresh }) => {
               </tr>
             ))}
           </thead>
-          <tbody>
-            {table.getRowModel().rows.length === 0 ? (
+          {table.getFilteredRowModel().rows.length === 0 ? (
+            <tbody>
               <tr>
-                <td colSpan={columns.length} className='text-center'>
-                  <Typography className='p-4'>No notifications found</Typography>
+                <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                  No data available
                 </td>
               </tr>
-            ) : (
-              table.getRowModel().rows.map(row => (
+            </tbody>
+          ) : (
+            <tbody>
+              {table.getRowModel().rows.map(row => (
                 <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                   ))}
                 </tr>
-              ))
-            )}
-          </tbody>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
       <TablePagination
+        rowsPerPageOptions={[10, 25, 50]}
         component='div'
-        className='border-t'
+        className='border-bs'
         count={table.getFilteredRowModel().rows.length}
         rowsPerPage={table.getState().pagination.pageSize}
         page={table.getState().pagination.pageIndex}
+        SelectProps={{
+          inputProps: { 'aria-label': 'rows per page' }
+        }}
         onPageChange={(_, page) => {
           table.setPageIndex(page)
         }}
