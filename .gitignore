@@ -1,0 +1,69 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.pnp.cjs
+# Lock files – keep for reproducible installs (uncomment to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Next.js
+/.next/
+/out/
+.next/
+out/
+
+# Production
+/build
+
+# Testing
+/coverage
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# Turbo / Turbopack
+.turbo
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Generated / build artifacts
+src/assets/iconify-icons/generated-icons.js
+src/assets/iconify-icons/generated-icons.css
+
+# Prisma
+# (schema.prisma is usually committed; uncomment if you use local DB files)
+# prisma/*.db
+# prisma/*.db-journal
+
+# Misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.sublime-*
+
+# Lint / style caches
+.eslintcache
+.stylelintcache
+
+# Optional
+*.log
+.cache/
