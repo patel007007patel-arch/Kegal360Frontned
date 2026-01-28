@@ -1,13 +1,17 @@
 'use client'
 
+// React Imports
+import { useState } from 'react'
+
 // Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
+import { toast } from 'react-toastify'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -22,8 +26,12 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { authAPI } from '@/utils/api'
 
 const ForgotPasswordV2 = ({ mode }) => {
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-4-dark.png'
   const lightImg = '/images/pages/auth-v2-mask-4-light.png'
@@ -78,10 +86,18 @@ const ForgotPasswordV2 = ({ mode }) => {
               Enter your email and we&#39;ll send you instructions to reset your password
             </Typography>
           </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
-            <TextField autoFocus fullWidth label='Email' />
-            <Button fullWidth variant='contained' type='submit'>
-              Send reset link
+          <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-5'>
+            <TextField 
+              autoFocus 
+              fullWidth 
+              label='Email' 
+              type='email'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            <Button fullWidth variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Sending...' : 'Send OTP'}
             </Button>
             <Typography className='flex justify-center items-center' color='primary.main'>
               <Link href={getLocalizedUrl('/pages/auth/login-v2', locale)} className='flex items-center gap-1.5'>

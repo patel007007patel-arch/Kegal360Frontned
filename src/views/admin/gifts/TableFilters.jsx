@@ -13,17 +13,24 @@ const TableFilters = ({ setData, tableData }) => {
   // States
   const [status, setStatus] = useState('')
   const [plan, setPlan] = useState('')
+  const [partnerCode, setPartnerCode] = useState('')
 
   useEffect(() => {
     const filteredData = tableData?.filter(gift => {
-      if (status && gift.status !== status) return false
+      if (status) {
+        // Handle expired status check
+        const isExpired = gift.expiresAt && new Date(gift.expiresAt) < new Date() && gift.status === 'pending';
+        const displayStatus = isExpired ? 'expired' : gift.status;
+        if (displayStatus !== status) return false
+      }
       if (plan && gift.plan !== plan) return false
+      if (partnerCode && gift.partnerCode?.toUpperCase() !== partnerCode.toUpperCase()) return false
 
       return true
     })
 
     setData(filteredData || [])
-  }, [status, plan, tableData, setData])
+  }, [status, plan, partnerCode, tableData, setData])
 
   return (
     <CardContent>
@@ -40,8 +47,9 @@ const TableFilters = ({ setData, tableData }) => {
               labelId='status-select'
               inputProps={{ placeholder: 'Select Status' }}
             >
-              <MenuItem value=''>Select Status</MenuItem>
+              <MenuItem value=''>All Status</MenuItem>
               <MenuItem value='pending'>Pending</MenuItem>
+              <MenuItem value='active'>Active</MenuItem>
               <MenuItem value='redeemed'>Redeemed</MenuItem>
               <MenuItem value='expired'>Expired</MenuItem>
               <MenuItem value='cancelled'>Cancelled</MenuItem>
@@ -60,7 +68,7 @@ const TableFilters = ({ setData, tableData }) => {
               labelId='plan-select'
               inputProps={{ placeholder: 'Select Plan' }}
             >
-              <MenuItem value=''>Select Plan</MenuItem>
+              <MenuItem value=''>All Plans</MenuItem>
               <MenuItem value='monthly'>Monthly</MenuItem>
               <MenuItem value='yearly'>Yearly</MenuItem>
             </Select>

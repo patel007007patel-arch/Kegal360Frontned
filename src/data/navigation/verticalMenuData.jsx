@@ -51,8 +51,28 @@ export const getK360AdminMenu = () => {
       icon: 'ri-user-line'
     },
     {
-      label: 'Videos',
-      href: '/admin/videos',
+      label: 'Cycle Phases',
+      href: '/admin/cycle-phases',
+      icon: 'ri-calendar-check-line'
+    },
+    {
+      label: 'Sequences',
+      href: '/admin/sequences',
+      icon: 'ri-stack-line'
+    },
+    {
+      label: 'Sessions',
+      href: '/admin/sessions',
+      icon: 'ri-play-circle-line'
+    },
+    {
+      label: 'Steps',
+      href: '/admin/steps',
+      icon: 'ri-list-check'
+    },
+    {
+      label: 'Media Library',
+      href: '/admin/media',
       icon: 'ri-video-line'
     },
     {

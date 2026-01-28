@@ -80,14 +80,13 @@ const GiftListTable = ({ tableData, onRefresh }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedGift, setSelectedGift] = useState(null)
   const [rowSelection, setRowSelection] = useState({})
-  const [data, setData] = useState(...[tableData])
-  const [filteredData, setFilteredData] = useState(data)
   const [globalFilter, setGlobalFilter] = useState('')
+  const data = useMemo(() => Array.isArray(tableData) ? tableData : [], [tableData])
+  const [filteredData, setFilteredData] = useState(data)
 
   useEffect(() => {
-    setData(tableData)
-    setFilteredData(tableData)
-  }, [tableData])
+    setFilteredData(data)
+  }, [data])
 
   const handleDelete = async () => {
     try {
@@ -166,8 +165,23 @@ const GiftListTable = ({ tableData, onRefresh }) => {
       columnHelper.accessor('sender', {
         header: 'Sender',
         cell: ({ row }) => (
-          <Typography color='text.primary' className='font-medium'>
-            {row.original.sender?.name || 'Anonymous'}
+          <div className='flex flex-col'>
+            <Typography color='text.primary' className='font-medium'>
+              {row.original.sender?.name || 'Anonymous'}
+            </Typography>
+            {row.original.sender?.email && (
+              <Typography variant='body2' color='text.secondary'>
+                {row.original.sender.email}
+              </Typography>
+            )}
+          </div>
+        )
+      }),
+      columnHelper.accessor('partnerCode', {
+        header: 'Partner Code',
+        cell: ({ row }) => (
+          <Typography color='text.primary' className='font-mono'>
+            {row.original.partnerCode || 'N/A'}
           </Typography>
         )
       }),
@@ -183,6 +197,14 @@ const GiftListTable = ({ tableData, onRefresh }) => {
           />
         )
       }),
+      columnHelper.accessor('duration', {
+        header: 'Duration',
+        cell: ({ row }) => (
+          <Typography color='text.primary'>
+            {row.original.duration || (row.original.plan === 'yearly' ? 12 : 1)} {row.original.duration === 1 ? 'month' : 'months'}
+          </Typography>
+        )
+      }),
       columnHelper.accessor('amount', {
         header: 'Amount',
         cell: ({ row }) => (
@@ -193,30 +215,62 @@ const GiftListTable = ({ tableData, onRefresh }) => {
       }),
       columnHelper.accessor('giftedAt', {
         header: 'Gifted At',
-        cell: ({ row }) => <Typography>{formatDate(row.original.giftedAt)}</Typography>
+        cell: ({ row }) => <Typography>{formatDate(row.original.giftedAt || row.original.createdAt)}</Typography>
+      }),
+      columnHelper.accessor('activatedAt', {
+        header: 'Activated At',
+        cell: ({ row }) => <Typography>{formatDate(row.original.activatedAt)}</Typography>
       }),
       columnHelper.accessor('redeemedAt', {
         header: 'Redeemed At',
         cell: ({ row }) => <Typography>{formatDate(row.original.redeemedAt)}</Typography>
       }),
+      columnHelper.accessor('expiresAt', {
+        header: 'Expires At',
+        cell: ({ row }) => {
+          const expiresAt = row.original.expiresAt;
+          const isExpired = expiresAt && new Date(expiresAt) < new Date();
+          return (
+            <Typography color={isExpired ? 'error' : 'text.primary'}>
+              {formatDate(expiresAt)}
+            </Typography>
+          );
+        }
+      }),
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => {
           const status = row.original.status || 'pending'
+          // Check if expired
+          const isExpired = row.original.expiresAt && new Date(row.original.expiresAt) < new Date() && status === 'pending';
+          const displayStatus = isExpired ? 'expired' : status;
           return (
             <Chip
               variant='tonal'
-              label={status}
+              label={displayStatus}
               size='small'
               color={
-                status === 'redeemed' ? 'success' :
-                status === 'pending' ? 'warning' :
-                status === 'expired' ? 'error' : 'default'
+                displayStatus === 'redeemed' || displayStatus === 'active' ? 'success' :
+                displayStatus === 'pending' ? 'warning' :
+                displayStatus === 'expired' ? 'error' :
+                displayStatus === 'cancelled' ? 'default' : 'default'
               }
               className='capitalize'
             />
           )
         }
+      }),
+      columnHelper.accessor('message', {
+        header: 'Message',
+        cell: ({ row }) => (
+          <Typography 
+            color='text.primary' 
+            className='max-w-[200px] truncate'
+            title={row.original.message || ''}
+          >
+            {row.original.message || 'No message'}
+          </Typography>
+        )
       }),
       columnHelper.accessor('action', {
         header: 'Action',

@@ -9,28 +9,27 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'react-toastify'
 
 // Components Imports
-import GiftList from '@views/admin/gifts'
+import StepList from '@views/admin/steps'
 import { adminAPI } from '@/utils/api'
 
-const AdminGifts = () => {
-  const [gifts, setGifts] = useState([])
+const AdminSteps = () => {
+  const [steps, setSteps] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchGifts = async () => {
+  const fetchSteps = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getGifts({ page: 1, limit: 500 })
-      setGifts(Array.isArray(response?.data?.gifts) ? response.data.gifts : [])
+      const response = await adminAPI.getSteps()
+      setSteps(response.data.steps || [])
     } catch (error) {
-      toast.error(error.message || 'Error fetching gifts')
-      setGifts([])
+      toast.error(error.message || 'Error fetching steps')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchGifts()
+    fetchSteps()
   }, [])
 
   if (loading) {
@@ -38,14 +37,14 @@ const AdminGifts = () => {
       <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
           <div className='flex items-center justify-center p-8'>
-            <Typography>Loading gifts...</Typography>
+            <Typography>Loading steps...</Typography>
           </div>
         </Grid>
       </Grid>
     )
   }
 
-  return <GiftList giftData={gifts} onRefresh={fetchGifts} />
+  return <StepList stepData={steps} onRefresh={fetchSteps} />
 }
 
-export default AdminGifts
+export default AdminSteps

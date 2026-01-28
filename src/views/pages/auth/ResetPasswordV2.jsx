@@ -1,11 +1,11 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
 // MUI Imports
 import Typography from '@mui/material/Typography'
@@ -13,6 +13,7 @@ import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 import Button from '@mui/material/Button'
+import { toast } from 'react-toastify'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -27,11 +28,26 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { authAPI } from '@/utils/api'
 
 const ResetPasswordV2 = ({ mode }) => {
   // States
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [isConfirmPasswordShown, setIsConfirmPasswordShown] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const emailParam = searchParams?.get('email')
+    if (emailParam) {
+      setEmail(emailParam)
+    }
+  }, [searchParams])
 
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-3-dark.png'
@@ -56,6 +72,45 @@ const ResetPasswordV2 = ({ mode }) => {
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
   const handleClickShowConfirmPassword = () => setIsConfirmPasswordShown(show => !show)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!email || !email.trim()) {
+      toast.error('Email is required')
+      return
+    }
+    
+    if (!otp || !otp.trim()) {
+      toast.error('OTP is required')
+      return
+    }
+    
+    if (!password || password.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await authAPI.resetPassword({
+        email: email.trim(),
+        otp: otp.trim(),
+        newPassword: password,
+      })
+      toast.success('Password reset successfully! You can now log in with your new password.')
+      router.push(getLocalizedUrl('/pages/auth/login-v2', locale))
+    } catch (err) {
+      toast.error(err.message || 'Failed to reset password')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className='flex bs-full justify-center'>
@@ -90,12 +145,34 @@ const ResetPasswordV2 = ({ mode }) => {
               Your new password must be different from previously used passwords
             </Typography>
           </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
+          <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-5'>
             <TextField
               autoFocus
               fullWidth
-              label='Password'
+              label='Email'
+              type='email'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              disabled={!!searchParams?.get('email')}
+            />
+            <TextField
+              fullWidth
+              label='OTP'
+              value={otp}
+              onChange={e => setOtp(e.target.value)}
+              placeholder='Enter 6-digit OTP'
+              required
+              inputProps={{ maxLength: 6 }}
+            />
+            <TextField
+              fullWidth
+              label='New Password'
               type={isPasswordShown ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder='Minimum 6 characters'
+              required
               slotProps={{
                 input: {
                   endAdornment: (
@@ -115,8 +192,11 @@ const ResetPasswordV2 = ({ mode }) => {
             />
             <TextField
               fullWidth
-              label='Confirm Password'
+              label='Confirm New Password'
               type={isConfirmPasswordShown ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
               slotProps={{
                 input: {
                   endAdornment: (
@@ -134,8 +214,8 @@ const ResetPasswordV2 = ({ mode }) => {
                 }
               }}
             />
-            <Button fullWidth variant='contained' type='submit'>
-              Set New Password
+            <Button fullWidth variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Resetting...' : 'Set New Password'}
             </Button>
             <Typography className='flex justify-center items-center' color='primary.main'>
               <Link href={getLocalizedUrl('/pages/auth/login-v2', locale)} className='flex items-center gap-1.5'>

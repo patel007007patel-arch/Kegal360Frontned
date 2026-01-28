@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Use same-origin /api so Next.js rewrites proxy to backend (see next.config.mjs). Override with NEXT_PUBLIC_API_URL for a direct backend URL.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '' : 'http://localhost:5000') + '/api';
 
 // Get auth token from localStorage
 // TokenSync component keeps this in sync with NextAuth session
@@ -13,11 +14,19 @@ const getAuthToken = () => {
   return null;
 };
 
-// API request helper
+// API request helper (requires auth)
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
-  
+
   if (!token) {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname || '';
+      const isLoginPage = pathname.includes('/login');
+      if (!isLoginPage) {
+        window.location.href = '/login';
+        return;
+      }
+    }
     throw new Error('No authentication token available. Please log in again.');
   }
   
@@ -55,6 +64,48 @@ const apiRequest = async (endpoint, options = {}) => {
           }
         }
       }
+      const url = `${API_URL}${endpoint}`;
+      const msg = response.status === 404 && data.path
+        ? `${data.message || 'Route not found'} (requested: ${url}, server saw: ${data.path})`
+        : (data.message || 'API request failed');
+      throw new Error(msg);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Public API request helper (no auth required)
+const publicApiRequest = async (endpoint, options = {}) => {
+  const token = getAuthToken(); // Optional - include if available
+  
+  const config = {
+    method: options.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
+  };
+
+  // Remove Content-Type for FormData (browser will set it with boundary)
+  if (options.body instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+
+  if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
+    config.body = JSON.stringify(config.body);
+  }
+
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+    const data = await response.json();
+
+    if (!response.ok) {
       throw new Error(data.message || 'API request failed');
     }
 
@@ -164,6 +215,7 @@ export const adminAPI = {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/admin/gifts?${query}`);
   },
+  getGiftById: (id) => apiRequest(`/admin/gifts/${id}`),
   deleteGift: (id) => apiRequest(`/admin/gifts/${id}`, {
     method: 'DELETE',
   }),
@@ -184,19 +236,180 @@ export const adminAPI = {
   deleteNotification: (id) => apiRequest(`/notifications/${id}`, {
     method: 'DELETE',
   }),
+
+  // Cycle Phases
+  getCyclePhases: () => apiRequest('/admin/cycle-phases'),
+  getCyclePhaseById: (id) => apiRequest(`/admin/cycle-phases/${id}`),
+  createCyclePhase: (data) => apiRequest('/admin/cycle-phases', {
+    method: 'POST',
+    body: data,
+  }),
+  updateCyclePhase: (id, data) => apiRequest(`/admin/cycle-phases/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  deleteCyclePhase: (id) => apiRequest(`/admin/cycle-phases/${id}`, {
+    method: 'DELETE',
+  }),
+
+  // Sequences
+  getSequences: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/admin/sequences?${query}`);
+  },
+  getSequenceById: (id) => apiRequest(`/admin/sequences/${id}`),
+  createSequence: (data) => apiRequest('/admin/sequences', {
+    method: 'POST',
+    body: data,
+  }),
+  updateSequence: (id, data) => apiRequest(`/admin/sequences/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  deleteSequence: (id) => apiRequest(`/admin/sequences/${id}`, {
+    method: 'DELETE',
+  }),
+  duplicateSequence: (id) => apiRequest(`/admin/sequences/${id}/duplicate`, {
+    method: 'POST',
+  }),
+  reorderSequences: (sequenceIds) => apiRequest('/admin/sequences/reorder', {
+    method: 'POST',
+    body: { sequenceIds },
+  }),
+
+  // Sessions
+  getSessions: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/admin/sessions?${query}`);
+  },
+  getSessionById: (id) => apiRequest(`/admin/sessions/${id}`),
+  createSession: (data) => apiRequest('/admin/sessions', {
+    method: 'POST',
+    body: data,
+  }),
+  updateSession: (id, data) => apiRequest(`/admin/sessions/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  deleteSession: (id) => apiRequest(`/admin/sessions/${id}`, {
+    method: 'DELETE',
+  }),
+  reorderSessions: (sessionIds) => apiRequest('/admin/sessions/reorder', {
+    method: 'POST',
+    body: { sessionIds },
+  }),
+
+  // Steps
+  getSteps: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/admin/steps?${query}`);
+  },
+  getStepById: (id) => apiRequest(`/admin/steps/${id}`),
+  createStep: (data) => apiRequest('/admin/steps', {
+    method: 'POST',
+    body: data,
+  }),
+  updateStep: (id, data) => apiRequest(`/admin/steps/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  deleteStep: (id) => apiRequest(`/admin/steps/${id}`, {
+    method: 'DELETE',
+  }),
+  reorderSteps: (stepIds) => apiRequest('/admin/steps/reorder', {
+    method: 'POST',
+    body: { stepIds },
+  }),
+
+  // Media Library
+  getMedia: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/admin/media?${query}`);
+  },
+  getMediaById: (id) => apiRequest(`/admin/media/${id}`),
+  createMedia: (formData) => {
+    const token = getAuthToken();
+    return fetch(`${API_URL}/admin/media`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    }).then(async (response) => {
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? 'Invalid response from server' : (text || 'Upload failed'));
+      }
+      if (!response.ok) {
+        throw new Error(data.message || `Upload failed (${response.status})`);
+      }
+      return data;
+    }).catch((error) => {
+      console.error('API Error:', error);
+      throw error;
+    });
+  },
+  updateMedia: (id, formData) => apiRequest(`/admin/media/${id}`, {
+    method: 'PUT',
+    headers: {},
+    body: formData,
+  }),
+  deleteMedia: (id) => apiRequest(`/admin/media/${id}`, {
+    method: 'DELETE',
+  }),
+
+  // Admin Profile & Settings
+  getProfile: () => apiRequest('/admin/profile'),
+  updateProfile: (data) => apiRequest('/admin/profile', {
+    method: 'PUT',
+    body: data,
+  }),
+  changePassword: (data) => apiRequest('/admin/profile/change-password', {
+    method: 'PUT',
+    body: data,
+  }),
+};
+
+// User API methods (public-facing endpoints)
+export const userAPI = {
+  // Sessions
+  getSessionsByPhase: (phase) => {
+    const query = new URLSearchParams({ phase }).toString();
+    return publicApiRequest(`/sessions/phase?${query}`);
+  },
+  getAllSessions: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return publicApiRequest(`/sessions/all?${query}`);
+  },
+  getSessionDetails: (id) => publicApiRequest(`/sessions/${id}`),
+
+  // Steps
+  getStepsBySession: (sessionId) => publicApiRequest(`/sessions/${sessionId}/steps`),
+  getStepById: (stepId) => publicApiRequest(`/sessions/steps/${stepId}`),
 };
 
 // Auth API methods
 export const authAPI = {
-  login: (credentials) => apiRequest('/auth/login', {
+  login: (credentials) => publicApiRequest('/auth/login', {
     method: 'POST',
     body: credentials,
   }),
-  register: (userData) => apiRequest('/auth/register', {
+  register: (userData) => publicApiRequest('/auth/register', {
     method: 'POST',
     body: userData,
   }),
   getMe: () => apiRequest('/auth/me'),
+  forgotPassword: (email) => publicApiRequest('/auth/forgot-password', {
+    method: 'POST',
+    body: { email },
+  }),
+  resetPassword: (data) => publicApiRequest('/auth/reset-password', {
+    method: 'POST',
+    body: data,
+  }),
 };
 
 export default apiRequest;

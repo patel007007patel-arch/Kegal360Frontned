@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams, useRouter } from 'next/navigation'
+
 // MUI Imports
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
@@ -19,9 +22,12 @@ import { toast } from 'react-toastify'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
-import { authAPI, adminAPI } from '@/utils/api'
+import { adminAPI } from '@/utils/api'
+import { getLocalizedUrl } from '@/utils/i18n'
 
 const AdminProfile = () => {
+  const router = useRouter()
+  const { lang: locale } = useParams()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -31,10 +37,10 @@ const AdminProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await authAPI.getMe()
-        const user = res?.data?.user
-        if (user) {
-          setProfile(user)
+        const res = await adminAPI.getProfile()
+        const admin = res?.data?.admin
+        if (admin) {
+          setProfile(admin)
         }
       } catch (err) {
         toast.error(err.message || 'Failed to load profile')
@@ -51,10 +57,9 @@ const AdminProfile = () => {
   }
 
   const handleEditSave = async () => {
-    if (!profile?.id) return
     try {
       setSaving(true)
-      await adminAPI.updateUser(profile.id, { name: editName })
+      await adminAPI.updateProfile({ name: editName })
       setProfile(prev => (prev ? { ...prev, name: editName } : null))
       toast.success('Profile updated successfully')
       setEditOpen(false)
@@ -63,6 +68,10 @@ const AdminProfile = () => {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleChangePassword = () => {
+    router.push(getLocalizedUrl('/admin/settings', locale))
   }
 
   const displayName = profile?.name || '—'
@@ -154,7 +163,7 @@ const AdminProfile = () => {
                     color='primary'
                     size='small'
                     className='p-0 min-is-0'
-                    onClick={() => toast.info('Change password coming soon')}
+                    onClick={handleChangePassword}
                   >
                     Change Password
                   </Button>
@@ -189,6 +198,7 @@ const AdminProfile = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
     </Box>
   )
 }

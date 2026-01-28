@@ -9,28 +9,27 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'react-toastify'
 
 // Components Imports
-import GiftList from '@views/admin/gifts'
+import SequenceList from '@views/admin/sequences'
 import { adminAPI } from '@/utils/api'
 
-const AdminGifts = () => {
-  const [gifts, setGifts] = useState([])
+const AdminSequences = () => {
+  const [sequences, setSequences] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchGifts = async () => {
+  const fetchSequences = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getGifts({ page: 1, limit: 500 })
-      setGifts(Array.isArray(response?.data?.gifts) ? response.data.gifts : [])
+      const response = await adminAPI.getSequences()
+      setSequences(response.data.sequences || [])
     } catch (error) {
-      toast.error(error.message || 'Error fetching gifts')
-      setGifts([])
+      toast.error(error.message || 'Error fetching sequences')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchGifts()
+    fetchSequences()
   }, [])
 
   if (loading) {
@@ -38,14 +37,14 @@ const AdminGifts = () => {
       <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
           <div className='flex items-center justify-center p-8'>
-            <Typography>Loading gifts...</Typography>
+            <Typography>Loading sequences...</Typography>
           </div>
         </Grid>
       </Grid>
     )
   }
 
-  return <GiftList giftData={gifts} onRefresh={fetchGifts} />
+  return <SequenceList sequenceData={sequences} onRefresh={fetchSequences} />
 }
 
-export default AdminGifts
+export default AdminSequences

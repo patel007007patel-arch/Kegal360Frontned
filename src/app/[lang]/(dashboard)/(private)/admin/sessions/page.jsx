@@ -9,28 +9,27 @@ import Typography from '@mui/material/Typography'
 import { toast } from 'react-toastify'
 
 // Components Imports
-import GiftList from '@views/admin/gifts'
+import SessionList from '@views/admin/sessions'
 import { adminAPI } from '@/utils/api'
 
-const AdminGifts = () => {
-  const [gifts, setGifts] = useState([])
+const AdminSessions = () => {
+  const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchGifts = async () => {
+  const fetchSessions = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getGifts({ page: 1, limit: 500 })
-      setGifts(Array.isArray(response?.data?.gifts) ? response.data.gifts : [])
+      const response = await adminAPI.getSessions()
+      setSessions(response.data.sessions || [])
     } catch (error) {
-      toast.error(error.message || 'Error fetching gifts')
-      setGifts([])
+      toast.error(error.message || 'Error fetching sessions')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchGifts()
+    fetchSessions()
   }, [])
 
   if (loading) {
@@ -38,14 +37,14 @@ const AdminGifts = () => {
       <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
           <div className='flex items-center justify-center p-8'>
-            <Typography>Loading gifts...</Typography>
+            <Typography>Loading sessions...</Typography>
           </div>
         </Grid>
       </Grid>
     )
   }
 
-  return <GiftList giftData={gifts} onRefresh={fetchGifts} />
+  return <SessionList sessionData={sessions} onRefresh={fetchSessions} />
 }
 
-export default AdminGifts
+export default AdminSessions
