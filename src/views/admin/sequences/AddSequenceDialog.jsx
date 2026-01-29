@@ -27,17 +27,9 @@ import { toast } from 'react-toastify'
 // Utils
 import { adminAPI } from '@/utils/api'
 
-const AddSequenceDialog = ({ open, handleClose, onRefresh }) => {
+const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId = null }) => {
   const [loading, setLoading] = useState(false)
   const [cyclePhases, setCyclePhases] = useState([])
-
-  useEffect(() => {
-    if (open) {
-      adminAPI.getCyclePhases().then(res => {
-        setCyclePhases(res.data.cyclePhases || [])
-      }).catch(() => {})
-    }
-  }, [open])
 
   const {
     control,
@@ -55,6 +47,23 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh }) => {
       isActive: true
     }
   })
+
+  useEffect(() => {
+    if (open) {
+      adminAPI.getCyclePhases().then(res => {
+        setCyclePhases(res.data.cyclePhases || [])
+      }).catch(() => {})
+      resetForm({
+        cyclePhase: initialCyclePhaseId || '',
+        name: '',
+        displayName: '',
+        description: '',
+        thumbnail: '',
+        order: 1,
+        isActive: true
+      })
+    }
+  }, [open, initialCyclePhaseId, resetForm])
 
   const onSubmit = async (data) => {
     try {

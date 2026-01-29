@@ -1,34 +1,25 @@
 'use client'
 
 // React Imports
-import { useEffect, useState, useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import Divider from '@mui/material/Divider'
 import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import TextField from '@mui/material/TextField'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
+import Box from '@mui/material/Box'
 import TablePagination from '@mui/material/TablePagination'
 
 // Third-party Imports
-import classnames from 'classnames'
-import { rankItem } from '@tanstack/match-sorter-utils'
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getFilteredRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFacetedMinMaxValues,
-  getPaginationRowModel,
-  getSortedRowModel
-} from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 
 // Component Imports
 import OptionMenu from '@core/components/option-menu'
@@ -40,37 +31,48 @@ import { adminAPI } from '@/utils/api'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
-const fuzzyFilter = (row, columnId, value, addMeta) => {
-  const itemRank = rankItem(row.getValue(columnId), value)
-  addMeta({ itemRank })
-  return itemRank.passed
+const DEFAULT_ROWS_PER_PAGE = 10
+
+function groupStepsBySession(steps, sessions) {
+  const bySession = {}
+  const sessList = Array.isArray(sessions) ? [...sessions] : []
+  sessList.forEach(sess => {
+    bySession[sess._id] = { session: sess, steps: [] }
+  })
+  ;(steps || []).forEach(step => {
+    const sessId = step.session?._id || step.session
+    if (sessId && bySession[sessId]) {
+      bySession[sessId].steps.push(step)
+    }
+  })
+  return sessList.map(sess => ({
+    session: sess,
+    steps: bySession[sess._id]?.steps || []
+  }))
 }
 
-const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...props }) => {
-  const [value, setValue] = useState(initialValue)
-
-  useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      onChange(value)
-    }, debounce)
-
-    return () => clearTimeout(timeout)
-  }, [value, debounce, onChange])
-
-  return <TextField {...props} value={value} onChange={e => setValue(e.target.value)} />
-}
-
-const StepListTable = ({ stepData, setAddStepOpen, setEditStepOpen, setSelectedStep, onRefresh }) => {
-  const [rowSelection, setRowSelection] = useState({})
-  const [globalFilter, setGlobalFilter] = useState('')
+const StepListTable = ({
+  stepData,
+  sessions = [],
+  setAddStepOpen,
+  setInitialSessionId,
+  setEditStepOpen,
+  setSelectedStep,
+  onRefresh
+}) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [stepToDelete, setStepToDelete] = useState(null)
+  const [expandedSession, setExpandedSession] = useState(null)
+  const [filteredData, setFilteredData] = useState([])
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [sectionPages, setSectionPages] = useState({})
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE)
 
-  const handleDeleteClick = (step) => {
+  useEffect(() => {
+    setFilteredData(stepData || [])
+  }, [stepData])
+
+  const handleDeleteClick = step => {
     setStepToDelete(step)
     setDeleteDialogOpen(true)
   }
@@ -87,56 +89,38 @@ const StepListTable = ({ stepData, setAddStepOpen, setEditStepOpen, setSelectedS
     }
   }
 
-  const data = useMemo(() => stepData || [], [stepData])
-  const [filteredData, setFilteredData] = useState(data)
+  const filteredBySearch = useMemo(() => {
+    const list = filteredData || []
+    if (!globalFilter.trim()) return list
+    const q = globalFilter.toLowerCase().trim()
+    return list.filter(item => (item.title || '').toLowerCase().includes(q))
+  }, [filteredData, globalFilter])
 
-  useEffect(() => {
-    setFilteredData(data)
-  }, [data])
+  const grouped = useMemo(
+    () => groupStepsBySession(filteredBySearch, sessions),
+    [filteredBySearch, sessions]
+  )
 
   const columnHelper = createColumnHelper()
-
   const columns = useMemo(
     () => [
       columnHelper.accessor('title', {
         header: 'Title',
-        cell: ({ row }) => (
-          <Typography color='text.primary'>
-            {row.original.title}
-          </Typography>
-        )
-      }),
-      columnHelper.accessor('session', {
-        header: 'Session',
-        cell: ({ row }) => (
-          <Typography color='text.primary'>
-            {row.original.session?.title || 'N/A'}
-          </Typography>
-        )
+        cell: ({ row }) => <Typography color='text.primary'>{row.original.title}</Typography>
       }),
       columnHelper.accessor('timer', {
         header: 'Timer',
-        cell: ({ row }) => (
-          <Typography color='text.primary'>
-            {row.original.timer}s
-          </Typography>
-        )
+        cell: ({ row }) => <Typography color='text.primary'>{row.original.timer}s</Typography>
       }),
       columnHelper.accessor('restTime', {
-        header: 'Rest Time',
+        header: 'Rest',
         cell: ({ row }) => (
-          <Typography color='text.primary'>
-            {row.original.restTime || 0}s
-          </Typography>
+          <Typography color='text.primary'>{row.original.restTime || 0}s</Typography>
         )
       }),
       columnHelper.accessor('order', {
         header: 'Order',
-        cell: ({ row }) => (
-          <Typography color='text.primary'>
-            {row.original.order}
-          </Typography>
-        )
+        cell: ({ row }) => <Typography color='text.primary'>{row.original.order}</Typography>
       }),
       columnHelper.accessor('isActive', {
         header: 'Status',
@@ -151,7 +135,7 @@ const StepListTable = ({ stepData, setAddStepOpen, setEditStepOpen, setSelectedS
         )
       }),
       columnHelper.accessor('action', {
-        header: 'Action',
+        header: 'Actions',
         cell: ({ row }) => (
           <div className='flex items-center gap-0.5'>
             <IconButton size='small' onClick={() => handleDeleteClick(row.original)}>
@@ -177,123 +161,154 @@ const StepListTable = ({ stepData, setAddStepOpen, setEditStepOpen, setSelectedS
         enableSorting: false
       })
     ],
-    [data, filteredData]
+    [setEditStepOpen, setSelectedStep]
   )
-
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    filterFns: {
-      fuzzy: fuzzyFilter
-    },
-    state: {
-      rowSelection,
-      globalFilter
-    },
-    initialState: {
-      pagination: {
-        pageSize: 10
-      }
-    },
-    enableRowSelection: true,
-    globalFilterFn: fuzzyFilter,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getFacetedMinMaxValues: getFacetedMinMaxValues()
-  })
 
   return (
     <>
       <Card>
         <CardHeader title='Filters' className='pbe-4' />
-        <TableFilters setData={setFilteredData} tableData={data} />
+        <TableFilters setData={setFilteredData} tableData={stepData || []} />
         <Divider />
         <div className='flex justify-between gap-4 p-5 flex-col items-start sm:flex-row sm:items-center'>
-          <Button
-            color='secondary'
-            variant='outlined'
-            startIcon={<i className='ri-upload-2-line' />}
-            className='max-sm:is-full'
-          >
-            Export
+          <TextField
+            size='small'
+            placeholder='Search step...'
+            value={globalFilter}
+            onChange={e => setGlobalFilter(e.target.value)}
+            className='max-sm:is-full sm:min-is-[200px]'
+          />
+          <Button variant='contained' onClick={() => setAddStepOpen(true)} className='max-sm:is-full'>
+            Add New Step
           </Button>
-          <div className='flex items-center gap-x-4 max-sm:gap-y-4 flex-col max-sm:is-full sm:flex-row'>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Step'
-              className='max-sm:is-full'
-            />
-            <Button variant='contained' onClick={() => setAddStepOpen(true)} className='max-sm:is-full'>
-              Add New Step
-            </Button>
-          </div>
         </div>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <div
-                          className={classnames({
-                            'flex items-center': header.column.getIsSorted(),
-                            'cursor-pointer select-none': header.column.getCanSort()
-                          })}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <i className='ri-arrow-up-s-line text-xl' />,
-                            desc: <i className='ri-arrow-down-s-line text-xl' />
-                          }[header.column.getIsSorted()] ?? null}
-                        </div>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className='text-center'>
-                    No data available
-                  </td>
-                </tr>
-              ) : (
-                table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        <TablePagination
-          component='div'
-          className='border-bs'
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          SelectProps={{
-            inputProps: { 'aria-label': 'rows per page' }
-          }}
-          rowsPerPageOptions={[10, 25, 50]}
-          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-          onPageChange={(_, page) => table.setPageIndex(page)}
-        />
+        <Divider />
+        {grouped.length === 0 ? (
+          <Box className='p-8 text-center'>
+            <Typography color='text.secondary'>
+              No sessions yet. Add sessions first on the Sessions page.
+            </Typography>
+          </Box>
+        ) : (
+          grouped.map(({ session, steps }) => {
+            const sessId = session._id
+            const isExpanded = expandedSession === sessId
+            const page = sectionPages[sessId] ?? 0
+            const paginatedSteps = steps.slice(
+              page * rowsPerPage,
+              (page + 1) * rowsPerPage
+            )
+            const seqName = session.sequence?.displayName || session.sequence?.name
+            return (
+              <Accordion
+                key={sessId}
+                expanded={isExpanded}
+                onChange={() => setExpandedSession(prev => (prev === sessId ? null : sessId))}
+                sx={{
+                  boxShadow: 'none',
+                  '&:before': { display: 'none' },
+                  borderBottom: '1px solid',
+                  borderColor: 'divider'
+                }}
+              >
+                <AccordionSummary expandIcon={<i className='ri-arrow-down-s-line text-xl' />}>
+                  <div className='flex items-center gap-3'>
+                    <i className='ri-folder-3-line text-2xl text-primary' />
+                    <Typography variant='subtitle1' fontWeight={600}>
+                      {session.title}
+                    </Typography>
+                    {seqName && (
+                      <Chip size='small' label={seqName} variant='tonal' color='secondary' />
+                    )}
+                    <Chip
+                      size='small'
+                      label={`${steps.length} step${steps.length !== 1 ? 's' : ''}`}
+                      variant='outlined'
+                    />
+                    <Button
+                      size='small'
+                      variant='text'
+                      onClick={e => {
+                        e.stopPropagation()
+                        setInitialSessionId(sessId)
+                        setAddStepOpen(true)
+                      }}
+                    >
+                      {steps.length === 0 ? 'Add first step' : 'Add step'}
+                    </Button>
+                  </div>
+                </AccordionSummary>
+                <AccordionDetails className='p-0'>
+                  {steps.length === 0 ? (
+                    <Box className='p-6 text-center bg-actionHover'>
+                      <Typography color='text.secondary' className='mbe-2'>
+                        No steps in this session yet.
+                      </Typography>
+                      <Button
+                        variant='outlined'
+                        size='small'
+                        onClick={() => {
+                          setInitialSessionId(sessId)
+                          setAddStepOpen(true)
+                        }}
+                      >
+                        Add first step
+                      </Button>
+                    </Box>
+                  ) : (
+                    <>
+                      <div className='overflow-x-auto'>
+                        <table className={tableStyles.table}>
+                          <thead>
+                            <tr>
+                              {columns.map(col => (
+                                <th key={col.id}>
+                                  {typeof col.header === 'function' ? col.header({}) : col.header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedSteps.map(step => (
+                              <tr key={step._id}>
+                                {columns.map(col => (
+                                  <td key={col.id}>
+                                    {col.cell
+                                      ? col.cell({
+                                          row: { original: step, id: step._id },
+                                          getValue: () => step[col.accessorKey || col.id]
+                                        })
+                                      : null}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <TablePagination
+                        component='div'
+                        className='border-bs'
+                        count={steps.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        SelectProps={{ inputProps: { 'aria-label': 'rows per page' } }}
+                        rowsPerPageOptions={[5, 10, 25]}
+                        onPageChange={(_, newPage) =>
+                          setSectionPages(prev => ({ ...prev, [sessId]: newPage }))
+                        }
+                        onRowsPerPageChange={e => {
+                          setRowsPerPage(Number(e.target.value))
+                          setSectionPages(prev => ({ ...prev, [sessId]: 0 }))
+                        }}
+                      />
+                    </>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            )
+          })
+        )}
       </Card>
       <ConfirmationDialog
         open={deleteDialogOpen}

@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useId } from 'react'
 
 // Next Imports
 import Link from 'next/link'
@@ -60,7 +60,9 @@ const Login = ({ mode }) => {
   const borderedDarkIllustration = '/images/illustrations/auth/v2-login-dark-border.png'
   const borderedLightIllustration = '/images/illustrations/auth/v2-login-light-border.png'
 
-  // Hooks
+  // Hooks - useId ensures same IDs on server and client (fixes hydration)
+  const emailInputId = useId()
+  const passwordInputId = useId()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { lang: locale } = useParams()
@@ -108,8 +110,11 @@ const Login = ({ mode }) => {
           localStorage.setItem('token', session.backendToken)
         }
         
-        // Vars
-        const redirectURL = searchParams.get('redirectTo') ?? '/'
+        // Admin users always go to admin dashboard; others use redirectTo or home
+        const isAdmin = session?.user?.role === 'admin'
+        const redirectURL = isAdmin
+          ? themeConfig.homePageUrl
+          : (searchParams.get('redirectTo') ?? '/')
 
         router.replace(getLocalizedUrl(redirectURL, locale))
       } else {
@@ -185,6 +190,7 @@ const Login = ({ mode }) => {
               render={({ field }) => (
                 <TextField
                   {...field}
+                  id={emailInputId}
                   fullWidth
                   autoFocus
                   type='email'
@@ -207,9 +213,9 @@ const Login = ({ mode }) => {
               render={({ field }) => (
                 <TextField
                   {...field}
+                  id={passwordInputId}
                   fullWidth
                   label='Password'
-                  id='login-password'
                   type={isPasswordShown ? 'text' : 'password'}
                   onChange={e => {
                     field.onChange(e.target.value)

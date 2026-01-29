@@ -8,25 +8,33 @@ import SequenceListTable from './SequenceListTable'
 import AddSequenceDialog from './AddSequenceDialog'
 import EditSequenceDialog from './EditSequenceDialog'
 
-const SequenceList = ({ sequenceData, onRefresh }) => {
-  // States
+const SequenceList = ({ sequenceData, cyclePhases = [], onRefresh }) => {
   const [addSequenceOpen, setAddSequenceOpen] = useState(false)
   const [editSequenceOpen, setEditSequenceOpen] = useState(false)
   const [selectedSequence, setSelectedSequence] = useState(null)
+  const [initialCyclePhaseId, setInitialCyclePhaseId] = useState(null)
+
+  const handleCloseAdd = () => {
+    setAddSequenceOpen(false)
+    setInitialCyclePhaseId(null)
+  }
 
   return (
     <>
       <SequenceListTable
         sequenceData={sequenceData}
+        cyclePhases={cyclePhases}
         setAddSequenceOpen={setAddSequenceOpen}
+        setInitialCyclePhaseId={setInitialCyclePhaseId}
         setEditSequenceOpen={setEditSequenceOpen}
         setSelectedSequence={setSelectedSequence}
         onRefresh={onRefresh}
       />
       <AddSequenceDialog
         open={addSequenceOpen}
-        handleClose={() => setAddSequenceOpen(false)}
+        handleClose={handleCloseAdd}
         onRefresh={onRefresh}
+        initialCyclePhaseId={initialCyclePhaseId}
       />
       <EditSequenceDialog
         open={editSequenceOpen}

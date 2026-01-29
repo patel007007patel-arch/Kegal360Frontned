@@ -39,6 +39,7 @@ import {
 import TableFilters from './TableFilters'
 import AddUserDrawer from './AddUserDrawer'
 import EditUserDialog from '@components/admin/EditUserDialog'
+import UserDetailsDialog from './UserDetailsDialog'
 import OptionMenu from '@core/components/option-menu'
 import CustomAvatar from '@core/components/mui/Avatar'
 import ConfirmationDialog from '@components/admin/ConfirmationDialog'
@@ -105,6 +106,8 @@ const UserListTable = ({ tableData, onRefresh }) => {
   // States
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false)
+  const [userForView, setUserForView] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [rowSelection, setRowSelection] = useState({})
@@ -238,7 +241,14 @@ const UserListTable = ({ tableData, onRefresh }) => {
             <IconButton size='small' onClick={() => handleDeleteClick(row.original)}>
               <i className='ri-delete-bin-7-line text-textSecondary' />
             </IconButton>
-            <IconButton size='small'>
+            <IconButton
+              size='small'
+              onClick={() => {
+                setUserForView(row.original)
+                setViewDetailsOpen(true)
+              }}
+              title='View details'
+            >
               <i className='ri-eye-line text-textSecondary' />
             </IconButton>
             <OptionMenu
@@ -405,6 +415,14 @@ const UserListTable = ({ tableData, onRefresh }) => {
         setOpen={setEditDialogOpen}
         user={selectedUser}
         onSuccess={onRefresh}
+      />
+      <UserDetailsDialog
+        open={viewDetailsOpen}
+        onClose={() => {
+          setViewDetailsOpen(false)
+          setUserForView(null)
+        }}
+        user={userForView}
       />
       <ConfirmationDialog
         open={deleteDialogOpen}

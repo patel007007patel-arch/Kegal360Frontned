@@ -14,22 +14,27 @@ import { adminAPI } from '@/utils/api'
 
 const AdminSteps = () => {
   const [steps, setSteps] = useState([])
+  const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchSteps = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getSteps()
-      setSteps(response.data.steps || [])
+      const [stepsRes, sessRes] = await Promise.all([
+        adminAPI.getSteps(),
+        adminAPI.getSessions()
+      ])
+      setSteps(stepsRes.data.steps || [])
+      setSessions(sessRes.data.sessions || [])
     } catch (error) {
-      toast.error(error.message || 'Error fetching steps')
+      toast.error(error.message || 'Error fetching data')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchSteps()
+    fetchData()
   }, [])
 
   if (loading) {
@@ -44,7 +49,13 @@ const AdminSteps = () => {
     )
   }
 
-  return <StepList stepData={steps} onRefresh={fetchSteps} />
+  return (
+    <StepList
+      stepData={steps}
+      sessions={sessions}
+      onRefresh={fetchData}
+    />
+  )
 }
 
 export default AdminSteps

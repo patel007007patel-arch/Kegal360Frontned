@@ -28,7 +28,19 @@ import { toast } from 'react-toastify'
 // Utils
 import { adminAPI } from '@/utils/api'
 
-const AddStepDialog = ({ open, handleClose, onRefresh }) => {
+const defaultStepFormValues = {
+  session: '',
+  title: '',
+  instructions: '',
+  media: '',
+  audio: '',
+  timer: 30,
+  restTime: 0,
+  order: 1,
+  isActive: true
+}
+
+const AddStepDialog = ({ open, handleClose, onRefresh, initialSessionId = null }) => {
   const [loading, setLoading] = useState(false)
   const [mediaLoading, setMediaLoading] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
@@ -98,20 +110,16 @@ const AddStepDialog = ({ open, handleClose, onRefresh }) => {
     watch,
     formState: { errors }
   } = useForm({
-    defaultValues: {
-      session: '',
-      title: '',
-      instructions: '',
-      media: '',
-      audio: '',
-      timer: 30,
-      restTime: 0,
-      order: 1,
-      isActive: true
-    }
+    defaultValues: defaultStepFormValues
   })
 
   const stepTitle = watch('title')
+
+  useEffect(() => {
+    if (open) {
+      resetForm({ ...defaultStepFormValues, session: initialSessionId || '' })
+    }
+  }, [open, initialSessionId])
 
   // Load media when dialog opens or after upload
   const loadMedia = async () => {
@@ -133,7 +141,7 @@ const AddStepDialog = ({ open, handleClose, onRefresh }) => {
       await adminAPI.createStep(data)
       toast.success('Step created successfully')
       handleClose()
-      resetForm()
+      resetForm(defaultStepFormValues)
       if (onRefresh) onRefresh()
     } catch (error) {
       toast.error(error.message || 'Error creating step')

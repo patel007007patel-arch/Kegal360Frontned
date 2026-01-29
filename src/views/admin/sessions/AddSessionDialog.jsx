@@ -27,17 +27,23 @@ import { toast } from 'react-toastify'
 // Utils
 import { adminAPI } from '@/utils/api'
 
-const AddSessionDialog = ({ open, handleClose, onRefresh }) => {
+const defaultFormValues = {
+  sequence: '',
+  sessionType: 'yoga',
+  title: '',
+  description: '',
+  benefits: [],
+  thumbnail: '',
+  difficulty: 'beginner',
+  equipment: 'Equipment-free',
+  order: 1,
+  isActive: true,
+  isFree: true
+}
+
+const AddSessionDialog = ({ open, handleClose, onRefresh, initialSequenceId = null }) => {
   const [loading, setLoading] = useState(false)
   const [sequences, setSequences] = useState([])
-
-  useEffect(() => {
-    if (open) {
-      adminAPI.getSequences().then(res => {
-        setSequences(res.data.sequences || [])
-      }).catch(() => {})
-    }
-  }, [open])
 
   const {
     control,
@@ -45,20 +51,17 @@ const AddSessionDialog = ({ open, handleClose, onRefresh }) => {
     handleSubmit,
     formState: { errors }
   } = useForm({
-    defaultValues: {
-      sequence: '',
-      sessionType: 'yoga',
-      title: '',
-      description: '',
-      benefits: [],
-      thumbnail: '',
-      difficulty: 'beginner',
-      equipment: 'Equipment-free',
-      order: 1,
-      isActive: true,
-      isFree: true
-    }
+    defaultValues: defaultFormValues
   })
+
+  useEffect(() => {
+    if (open) {
+      adminAPI.getSequences().then(res => {
+        setSequences(res.data.sequences || [])
+      }).catch(() => {})
+      resetForm({ ...defaultFormValues, sequence: initialSequenceId || '' })
+    }
+  }, [open, initialSequenceId, resetForm])
 
   const onSubmit = async (data) => {
     try {
@@ -66,7 +69,7 @@ const AddSessionDialog = ({ open, handleClose, onRefresh }) => {
       await adminAPI.createSession(data)
       toast.success('Session created successfully')
       handleClose()
-      resetForm()
+      resetForm(defaultFormValues)
       if (onRefresh) onRefresh()
     } catch (error) {
       toast.error(error.message || 'Error creating session')

@@ -8,24 +8,33 @@ import SessionListTable from './SessionListTable'
 import AddSessionDialog from './AddSessionDialog'
 import EditSessionDialog from './EditSessionDialog'
 
-const SessionList = ({ sessionData, onRefresh }) => {
+const SessionList = ({ sessionData, sequences = [], onRefresh }) => {
   const [addSessionOpen, setAddSessionOpen] = useState(false)
   const [editSessionOpen, setEditSessionOpen] = useState(false)
   const [selectedSession, setSelectedSession] = useState(null)
+  const [initialSequenceId, setInitialSequenceId] = useState(null)
+
+  const handleCloseAdd = () => {
+    setAddSessionOpen(false)
+    setInitialSequenceId(null)
+  }
 
   return (
     <>
       <SessionListTable
         sessionData={sessionData}
+        sequences={sequences}
         setAddSessionOpen={setAddSessionOpen}
+        setInitialSequenceId={setInitialSequenceId}
         setEditSessionOpen={setEditSessionOpen}
         setSelectedSession={setSelectedSession}
         onRefresh={onRefresh}
       />
       <AddSessionDialog
         open={addSessionOpen}
-        handleClose={() => setAddSessionOpen(false)}
+        handleClose={handleCloseAdd}
         onRefresh={onRefresh}
+        initialSequenceId={initialSequenceId}
       />
       <EditSessionDialog
         open={editSessionOpen}

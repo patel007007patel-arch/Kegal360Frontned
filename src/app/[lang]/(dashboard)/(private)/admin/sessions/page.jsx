@@ -14,22 +14,27 @@ import { adminAPI } from '@/utils/api'
 
 const AdminSessions = () => {
   const [sessions, setSessions] = useState([])
+  const [sequences, setSequences] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchSessions = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getSessions()
-      setSessions(response.data.sessions || [])
+      const [sessRes, seqRes] = await Promise.all([
+        adminAPI.getSessions(),
+        adminAPI.getSequences()
+      ])
+      setSessions(sessRes.data.sessions || [])
+      setSequences(seqRes.data.sequences || [])
     } catch (error) {
-      toast.error(error.message || 'Error fetching sessions')
+      toast.error(error.message || 'Error fetching data')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchSessions()
+    fetchData()
   }, [])
 
   if (loading) {
@@ -44,7 +49,13 @@ const AdminSessions = () => {
     )
   }
 
-  return <SessionList sessionData={sessions} onRefresh={fetchSessions} />
+  return (
+    <SessionList
+      sessionData={sessions}
+      sequences={sequences}
+      onRefresh={fetchData}
+    />
+  )
 }
 
 export default AdminSessions

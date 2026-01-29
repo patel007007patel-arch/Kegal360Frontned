@@ -14,22 +14,27 @@ import { adminAPI } from '@/utils/api'
 
 const AdminSequences = () => {
   const [sequences, setSequences] = useState([])
+  const [cyclePhases, setCyclePhases] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchSequences = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await adminAPI.getSequences()
-      setSequences(response.data.sequences || [])
+      const [seqRes, phaseRes] = await Promise.all([
+        adminAPI.getSequences(),
+        adminAPI.getCyclePhases()
+      ])
+      setSequences(seqRes.data.sequences || [])
+      setCyclePhases(phaseRes.data.cyclePhases || [])
     } catch (error) {
-      toast.error(error.message || 'Error fetching sequences')
+      toast.error(error.message || 'Error fetching data')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchSequences()
+    fetchData()
   }, [])
 
   if (loading) {
@@ -44,7 +49,13 @@ const AdminSequences = () => {
     )
   }
 
-  return <SequenceList sequenceData={sequences} onRefresh={fetchSequences} />
+  return (
+    <SequenceList
+      sequenceData={sequences}
+      cyclePhases={cyclePhases}
+      onRefresh={fetchData}
+    />
+  )
 }
 
 export default AdminSequences

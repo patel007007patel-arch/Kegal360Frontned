@@ -10,6 +10,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
 import Grid from '@mui/material/Grid'
@@ -22,6 +23,16 @@ import { toast } from 'react-toastify'
 
 // Components Imports
 import { adminAPI } from '@/utils/api'
+
+const loadMedia = async () => {
+  try {
+    const res = await adminAPI.getMedia()
+    const list = res?.data?.media
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
 
 const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
   const [formData, setFormData] = useState({
@@ -36,6 +47,10 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
   })
   const [loading, setLoading] = useState(false)
   const [mediaLoading, setMediaLoading] = useState(false)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
+  const [videoFile, setVideoFile] = useState(null)
+  const [videoTitle, setVideoTitle] = useState('')
   const [media, setMedia] = useState([])
 
   const videos = Array.isArray(media) ? media.filter(m => (m.mediaType || '').toLowerCase() === 'video') : []
@@ -43,15 +58,45 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
   useEffect(() => {
     if (open) {
       setMediaLoading(true)
-      adminAPI.getMedia()
-        .then(res => {
-          const list = res?.data?.media
-          setMedia(Array.isArray(list) ? list : [])
-        })
-        .catch(() => setMedia([]))
+      loadMedia()
+        .then(setMedia)
         .finally(() => setMediaLoading(false))
+      setShowUpload(false)
+      setVideoFile(null)
+      setVideoTitle('')
     }
   }, [open])
+
+  const handleVideoUpload = async () => {
+    if (!videoFile) {
+      toast.error('Please select a video file')
+      return
+    }
+    try {
+      setUploadingVideo(true)
+      const fd = new FormData()
+      fd.append('video', videoFile)
+      fd.append('title', videoTitle || formData.title || 'New Video')
+      fd.append('mediaType', 'video')
+      fd.append('orientation', 'portrait')
+      fd.append('isActive', 'true')
+      const response = await adminAPI.createMedia(fd)
+      const newVideo = response.data?.media
+      if (newVideo) {
+        const list = await loadMedia()
+        setMedia(list)
+        setFormData(prev => ({ ...prev, media: newVideo._id }))
+        toast.success('Video uploaded and selected successfully')
+        setShowUpload(false)
+        setVideoFile(null)
+        setVideoTitle('')
+      }
+    } catch (error) {
+      toast.error(error.message || 'Error uploading video')
+    } finally {
+      setUploadingVideo(false)
+    }
+  }
 
   useEffect(() => {
     if (step) {
@@ -115,7 +160,7 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
                 value={videos.find(v => v._id === formData.media) || null}
                 onChange={(_, newValue) => setFormData({ ...formData, media: newValue ? newValue._id : '' })}
                 loading={mediaLoading}
-                noOptionsText={mediaLoading ? 'Loading videos...' : 'No videos. Add videos in Media Library first.'}
+                noOptionsText={mediaLoading ? 'Loading videos...' : 'No videos. Add videos in Media Library or upload below.'}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -124,6 +169,54 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
                   />
                 )}
               />
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<i className='ri-upload-line' />}
+                onClick={() => setShowUpload(!showUpload)}
+                sx={{ mt: 2 }}
+              >
+                {showUpload ? 'Cancel Upload' : 'Upload New Video'}
+              </Button>
+              {showUpload && (
+                <Grid container spacing={2} sx={{ mt: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant='subtitle2' gutterBottom>
+                      Upload New Video
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label='Video Title'
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                      placeholder={formData.title || 'Enter video title'}
+                      helperText='Leave empty to use step title'
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      type='file'
+                      label='Video File'
+                      InputLabelProps={{ shrink: true }}
+                      onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                      inputProps={{ accept: 'video/*' }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Button
+                      variant='contained'
+                      onClick={handleVideoUpload}
+                      disabled={!videoFile || uploadingVideo}
+                      startIcon={uploadingVideo ? <i className='ri-loader-4-line animate-spin' /> : <i className='ri-upload-line' />}
+                    >
+                      {uploadingVideo ? 'Uploading...' : 'Upload Video'}
+                    </Button>
+                  </Grid>
+                </Grid>
+              )}
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth>
