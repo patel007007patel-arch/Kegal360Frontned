@@ -108,3 +108,31 @@ src/views/forms/
 src/views/front-pages/
 src/views/react-table/
 src/views/pages/
+
+# -----------------------------------------------------------------------
+# More template/demo files – not needed for Kegal360 admin
+# -----------------------------------------------------------------------
+
+# Mock data for template apps (academy, ecommerce, invoice, etc.)
+src/fake-db/
+
+# One-time migration/translation scripts – not needed at runtime
+src/remove-translation-scripts/
+
+# Template public images (demo apps, front-pages, auth masks, illustrations, cards, logos)
+public/images/apps/
+public/images/front-pages/
+public/images/pages/
+public/images/illustrations/
+public/images/cards/
+public/images/logos/
+
+# Local Prisma DB (use MongoDB in production)
+src/prisma/dev.db
+src/prisma/migrations/
+
+# Redux template slices (calendar, chat, email, kanban) – not used in admin
+src/redux-store/slices/
+
+# Extra lockfile (use npm only to avoid “multiple lockfiles” warning)
+pnpm-lock.yaml
