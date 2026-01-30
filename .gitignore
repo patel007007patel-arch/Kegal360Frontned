@@ -72,3 +72,39 @@ Thumbs.db
 README.md
 readme.md
 README
+
+# -----------------------------------------------------------------------
+# Kegal360 Admin Panel only – exclude template/demo pages (do not push to Render)
+# Keep: admin/*, login, register, forgot-password, layout, api/auth
+# -----------------------------------------------------------------------
+
+# Template auth demo pages (v1, v2, multi-steps, etc.) – not used
+src/app/\[lang\]/(blank-layout-pages)/pages/
+
+# Template dashboard apps – not used (we only use admin/*)
+src/app/\[lang\]/(dashboard)/(private)/apps/
+
+# Template charts, dashboards, forms, react-table – not used
+src/app/\[lang\]/(dashboard)/(private)/charts/
+src/app/\[lang\]/(dashboard)/(private)/dashboards/
+src/app/\[lang\]/(dashboard)/(private)/forms/
+src/app/\[lang\]/(dashboard)/(private)/react-table/
+
+# Template pages (account-settings, faq, pricing, widget-examples, etc.) – not used
+src/app/\[lang\]/(dashboard)/(private)/pages/
+
+# Front-pages (landing, pricing, help-center, checkout, payment) – not used in admin
+src/app/front-pages/
+
+# Mock API routes for template apps – not used
+src/app/api/apps/
+src/app/api/pages/
+
+# Template views (apps, charts, dashboards, forms, front-pages, react-table, pages) – not used
+src/views/apps/
+src/views/charts/
+src/views/dashboards/
+src/views/forms/
+src/views/front-pages/
+src/views/react-table/
+src/views/pages/
