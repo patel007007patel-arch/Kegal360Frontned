@@ -51,9 +51,8 @@ export const authOptions = {
           }
 
           // ** Login API Call to match the user credentials and receive user data in response along with his role
-          // Backend routes are mounted at /api/auth, so the login endpoint is /api/auth/login
-          // Construct full absolute URL: http://localhost:5000/api/auth/login
-          const loginUrl = `${apiUrl}/api/auth/login`
+          // If API_URL already ends with /api (e.g. https://backend.onrender.com/api), use /auth/login; else use /api/auth/login
+          const loginUrl = apiUrl.endsWith('/api') ? `${apiUrl}/auth/login` : `${apiUrl}/api/auth/login`
           
           // Ensure we're calling the backend, not the frontend API route
           if (loginUrl.includes('localhost:3000') || loginUrl.startsWith('/api/')) {

@@ -35,6 +35,24 @@ $paths = @(
     "src/prisma/dev.db",
     "src/prisma/migrations",
     "src/redux-store/slices",
+    # Template components (dialogs, front-pages layout, pricing, stepper-dot)
+    "src/components/dialogs",
+    "src/components/layout/front-pages",
+    "src/components/pricing",
+    "src/components/stepper-dot",
+    # Template assets
+    "src/assets/svg/front-pages",
+    # Template libs (keep ApexCharts + AppReactApexCharts for dashboard)
+    "src/libs/ReactPlayer.jsx",
+    "src/libs/Recharts.jsx",
+    "src/libs/styles/AppFullCalendar.js",
+    "src/libs/styles/AppKeenSlider.js",
+    "src/libs/styles/AppReactDatepicker.jsx",
+    "src/libs/styles/AppReactDropzone.js",
+    "src/libs/styles/AppReactToastify.jsx",
+    "src/libs/styles/AppRecharts.js",
+    "src/libs/styles/inputOtp.module.css",
+    "src/libs/styles/tiptapEditor.css",
     # Extra lockfile
     "pnpm-lock.yaml"
 )

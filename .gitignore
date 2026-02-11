@@ -134,5 +134,26 @@ src/prisma/migrations/
 # Redux template slices (calendar, chat, email, kanban) – not used in admin
 src/redux-store/slices/
 
+# Template components – not used in admin (only admin/*, layout/vertical|horizontal|shared, theme, etc.)
+src/components/dialogs/
+src/components/layout/front-pages/
+src/components/pricing/
+src/components/stepper-dot/
+
+# Template assets (landing, help-center SVGs)
+src/assets/svg/front-pages/
+
+# Template libs – dashboard only uses ApexCharts/AppReactApexCharts
+src/libs/ReactPlayer.jsx
+src/libs/Recharts.jsx
+src/libs/styles/AppFullCalendar.js
+src/libs/styles/AppKeenSlider.js
+src/libs/styles/AppReactDatepicker.jsx
+src/libs/styles/AppReactDropzone.js
+src/libs/styles/AppReactToastify.jsx
+src/libs/styles/AppRecharts.js
+src/libs/styles/inputOtp.module.css
+src/libs/styles/tiptapEditor.css
+
 # Extra lockfile (use npm only to avoid “multiple lockfiles” warning)
 pnpm-lock.yaml
