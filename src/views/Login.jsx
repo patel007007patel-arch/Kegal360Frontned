@@ -15,7 +15,6 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
-import Divider from '@mui/material/Divider'
 import Alert from '@mui/material/Alert'
 
 // Third-party Imports
@@ -255,23 +254,7 @@ const Login = ({ mode }) => {
             <Button fullWidth variant='contained' type='submit'>
               Log In
             </Button>
-            <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography>New on our platform?</Typography>
-              <Typography component={Link} href={getLocalizedUrl('/register', locale)} color='primary.main'>
-                Create an account
-              </Typography>
-            </div>
           </form>
-          <Divider className='gap-3'>or</Divider>
-          <Button
-            color='secondary'
-            className='self-center text-textPrimary'
-            startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
-            sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
-            onClick={() => signIn('google')}
-          >
-            Sign in with Google
-          </Button>
         </div>
       </div>
     </div>

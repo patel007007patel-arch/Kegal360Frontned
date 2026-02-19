@@ -1,5 +1,8 @@
 'use client'
 
+// React Imports
+import { useState } from 'react'
+
 // Next Imports
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -8,6 +11,7 @@ import { useParams } from 'next/navigation'
 import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
+import Alert from '@mui/material/Alert'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -22,8 +26,18 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { authAPI } from '@/utils/api'
 
 const ForgotPasswordV2 = ({ mode }) => {
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [step, setStep] = useState(1) // 1: request OTP, 2: enter OTP + new password
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-4-dark.png'
   const lightImg = '/images/pages/auth-v2-mask-4-light.png'
@@ -44,6 +58,66 @@ const ForgotPasswordV2 = ({ mode }) => {
     borderedLightIllustration,
     borderedDarkIllustration
   )
+
+  const handleRequestOtp = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setError('Email is required')
+      return
+    }
+    setLoading(true)
+    try {
+      await authAPI.forgotPassword(trimmedEmail)
+      setSuccess('If an account exists with this email, you will receive an OTP to reset your password.')
+      setStep(2)
+    } catch (err) {
+      setError(err.message || 'Failed to send reset instructions. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+    const trimmedOtp = String(otp).trim()
+    const trimmedNew = newPassword.trim()
+    const trimmedConfirm = confirmPassword.trim()
+    if (!trimmedOtp) {
+      setError('OTP is required')
+      return
+    }
+    if (!trimmedNew) {
+      setError('New password is required')
+      return
+    }
+    if (trimmedNew.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+    if (trimmedNew !== trimmedConfirm) {
+      setError('Passwords do not match')
+      return
+    }
+    setLoading(true)
+    try {
+      await authAPI.resetPassword({
+        email: email.trim().toLowerCase(),
+        otp: trimmedOtp,
+        newPassword: trimmedNew
+      })
+      setSuccess('Password has been reset successfully. You can log in with your new password.')
+      setStep(3)
+    } catch (err) {
+      setError(err.message || 'Failed to reset password. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className='flex bs-full justify-center'>
@@ -75,25 +149,95 @@ const ForgotPasswordV2 = ({ mode }) => {
           <div>
             <Typography variant='h4'>Forgot Password 🔒</Typography>
             <Typography className='mbs-1'>
-              Enter your email and we&#39;ll send you instructions to reset your password
+              {step === 1 && "Enter your email and we'll send you an OTP to reset your password"}
+              {step === 2 && 'Enter the OTP sent to your email and your new password'}
+              {step === 3 && 'All set! You can sign in with your new password.'}
             </Typography>
           </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-5'>
-            <TextField autoFocus fullWidth label='Email' />
-            <Button fullWidth variant='contained' type='submit'>
-              Send reset link
+
+          {error && (
+            <Alert severity='error' onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert severity='success' onClose={() => setSuccess(null)}>
+              {success}
+            </Alert>
+          )}
+
+          {step === 1 && (
+            <form noValidate autoComplete='off' onSubmit={handleRequestOtp} className='flex flex-col gap-5'>
+              <TextField
+                autoFocus
+                fullWidth
+                label='Email'
+                type='email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+              />
+              <Button fullWidth variant='contained' type='submit' disabled={loading}>
+                {loading ? 'Sending…' : 'Send OTP'}
+              </Button>
+            </form>
+          )}
+
+          {step === 2 && (
+            <form noValidate autoComplete='off' onSubmit={handleResetPassword} className='flex flex-col gap-5'>
+              <TextField
+                autoFocus
+                fullWidth
+                label='OTP (6 digits)'
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                disabled={loading}
+                placeholder='Enter the code from email'
+              />
+              <TextField
+                fullWidth
+                label='New password'
+                type='password'
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={loading}
+                helperText='At least 6 characters'
+              />
+              <TextField
+                fullWidth
+                label='Confirm new password'
+                type='password'
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+              />
+              <Button fullWidth variant='contained' type='submit' disabled={loading}>
+                {loading ? 'Resetting…' : 'Reset password'}
+              </Button>
+            </form>
+          )}
+
+          {step === 3 && (
+            <Button
+              fullWidth
+              variant='contained'
+              component={Link}
+              href={getLocalizedUrl('/login', locale)}
+            >
+              Back to Login
             </Button>
-            <Typography className='flex justify-center items-center' color='primary.main'>
-              <Link href='/login' className='flex items-center gap-1.5'>
-                <DirectionalIcon
-                  ltrIconClass='ri-arrow-left-s-line'
-                  rtlIconClass='ri-arrow-right-s-line'
-                  className='text-xl'
-                />
-                <span>Back to Login</span>
-              </Link>
-            </Typography>
-          </form>
+          )}
+
+          <Typography className='flex justify-center items-center' color='primary.main'>
+            <Link href={getLocalizedUrl('/login', locale)} className='flex items-center gap-1.5'>
+              <DirectionalIcon
+                ltrIconClass='ri-arrow-left-s-line'
+                rtlIconClass='ri-arrow-right-s-line'
+                className='text-xl'
+              />
+              <span>Back to Login</span>
+            </Link>
+          </Typography>
         </div>
       </div>
     </div>
