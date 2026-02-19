@@ -4,6 +4,14 @@ import { headers } from 'next/headers'
 // MUI Imports
 import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
 
+// Viewport for mobile-friendly scaling
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true
+}
+
 // Third-party Imports
 import 'react-perfect-scrollbar/dist/css/styles.css'
 
@@ -43,8 +51,8 @@ const RootLayout = async props => {
 
   return (
     <TranslationWrapper headersList={headersList} lang={lang}>
-      <html id='__next' lang={lang} dir={direction} suppressHydrationWarning>
-        <body className='flex is-full min-bs-full flex-auto flex-col'>
+      <html id='__next' lang={lang} dir={direction} suppressHydrationWarning className='overflow-x-hidden'>
+        <body className='flex is-full min-bs-full flex-auto flex-col overflow-x-hidden min-is-0'>
           <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
           {children}
         </body>
