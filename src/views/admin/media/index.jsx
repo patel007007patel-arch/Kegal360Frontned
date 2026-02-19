@@ -7,10 +7,12 @@ import { useState } from 'react'
 import MediaListTable from './MediaListTable'
 import AddMediaDialog from './AddMediaDialog'
 import EditMediaDialog from './EditMediaDialog'
+import MediaDetailsDialog from './MediaDetailsDialog'
 
 const MediaList = ({ mediaData, onRefresh }) => {
   const [addMediaOpen, setAddMediaOpen] = useState(false)
   const [editMediaOpen, setEditMediaOpen] = useState(false)
+  const [viewMediaOpen, setViewMediaOpen] = useState(false)
   const [selectedMedia, setSelectedMedia] = useState(null)
 
   return (
@@ -19,6 +21,7 @@ const MediaList = ({ mediaData, onRefresh }) => {
         mediaData={mediaData}
         setAddMediaOpen={setAddMediaOpen}
         setEditMediaOpen={setEditMediaOpen}
+        setViewMediaOpen={setViewMediaOpen}
         setSelectedMedia={setSelectedMedia}
         onRefresh={onRefresh}
       />
@@ -35,6 +38,14 @@ const MediaList = ({ mediaData, onRefresh }) => {
         }}
         media={selectedMedia}
         onRefresh={onRefresh}
+      />
+      <MediaDetailsDialog
+        open={viewMediaOpen}
+        onClose={() => {
+          setViewMediaOpen(false)
+          setSelectedMedia(null)
+        }}
+        media={selectedMedia}
       />
     </>
   )

@@ -64,7 +64,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
   return <TextField {...props} value={value} onChange={e => setValue(e.target.value)} />
 }
 
-const MediaListTable = ({ mediaData, setAddMediaOpen, setEditMediaOpen, setSelectedMedia, onRefresh }) => {
+const MediaListTable = ({ mediaData, setAddMediaOpen, setEditMediaOpen, setViewMediaOpen, setSelectedMedia, onRefresh }) => {
   const [rowSelection, setRowSelection] = useState({})
   const [globalFilter, setGlobalFilter] = useState('')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -155,6 +155,17 @@ const MediaListTable = ({ mediaData, setAddMediaOpen, setEditMediaOpen, setSelec
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center gap-0.5'>
+            <IconButton
+              size='small'
+              onClick={() => {
+                setSelectedMedia(row.original)
+                setViewMediaOpen?.(true)
+              }}
+              aria-label='View details'
+              title='View details'
+            >
+              <i className='ri-eye-line text-textSecondary' />
+            </IconButton>
             <IconButton size='small' onClick={() => handleDeleteClick(row.original)}>
               <i className='ri-delete-bin-7-line text-textSecondary' />
             </IconButton>
