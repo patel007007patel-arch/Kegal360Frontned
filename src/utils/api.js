@@ -39,6 +39,8 @@ const apiRequest = async (endpoint, options = {}) => {
     },
     ...options,
   };
+  // Ensure auth is never overwritten when options.headers is passed (e.g. updateMedia with headers: {})
+  config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
 
   // Remove Content-Type for FormData (browser will set it with boundary)
   if (options.body instanceof FormData) {
