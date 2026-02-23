@@ -88,8 +88,9 @@ const AddStepDialog = ({ open, handleClose, onRefresh, initialSessionId = null }
       if (newVideo) {
         // Refresh media list
         await loadMedia()
-        // Automatically select the newly uploaded video
+        // Automatically select the newly uploaded video and set timer from video duration
         setValue('media', newVideo._id)
+        if (newVideo.duration != null) setValue('timer', Number(newVideo.duration) || 30)
         toast.success('Video uploaded and selected successfully')
         setShowUpload(false)
         setVideoFile(null)
@@ -233,7 +234,10 @@ const AddStepDialog = ({ open, handleClose, onRefresh, initialSessionId = null }
                       options={videos}
                       getOptionLabel={(option) => (option && option.title) || ''}
                       value={videos.find(v => v._id === field.value) || null}
-                      onChange={(_, newValue) => field.onChange(newValue ? newValue._id : '')}
+                      onChange={(_, newValue) => {
+                        field.onChange(newValue ? newValue._id : '')
+                        if (newValue?.duration != null) setValue('timer', Number(newValue.duration) || 30)
+                      }}
                       loading={mediaLoading}
                       noOptionsText={mediaLoading ? 'Loading videos...' : 'No videos. Add videos in Media Library first.'}
                       renderInput={(params) => (

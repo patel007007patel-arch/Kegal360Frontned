@@ -85,7 +85,11 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
       if (newVideo) {
         const list = await loadMedia()
         setMedia(list)
-        setFormData(prev => ({ ...prev, media: newVideo._id }))
+        setFormData(prev => ({
+          ...prev,
+          media: newVideo._id,
+          ...(newVideo.duration != null && { timer: Number(newVideo.duration) || 30 })
+        }))
         toast.success('Video uploaded and selected successfully')
         setShowUpload(false)
         setVideoFile(null)
@@ -158,7 +162,13 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
                 options={videos}
                 getOptionLabel={(option) => (option && option.title) || ''}
                 value={videos.find(v => v._id === formData.media) || null}
-                onChange={(_, newValue) => setFormData({ ...formData, media: newValue ? newValue._id : '' })}
+                onChange={(_, newValue) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    media: newValue ? newValue._id : '',
+                    ...(newValue?.duration != null && { timer: Number(newValue.duration) || 30 })
+                  }))
+                }}
                 loading={mediaLoading}
                 noOptionsText={mediaLoading ? 'Loading videos...' : 'No videos. Add videos in Media Library or upload below.'}
                 renderInput={(params) => (
