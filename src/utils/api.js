@@ -39,10 +39,13 @@ const apiRequest = async (endpoint, options = {}) => {
     },
     ...options,
   };
-  // Ensure auth is never overwritten when options.headers is passed (e.g. updateMedia with headers: {})
-  config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
-
-  // Remove Content-Type for FormData (browser will set it with boundary)
+  // Re-apply auth + Content-Type so they are never stripped when options.headers is passed (e.g. updateMedia/updateVideo with headers: {}). Other apiRequest callers (no headers option) are unchanged.
+  config.headers = {
+    'Content-Type': 'application/json',
+    ...config.headers,
+    Authorization: `Bearer ${token}`
+  };
+  // FormData requests must not send Content-Type (browser sets multipart with boundary). Only updateVideo/updateMedia pass body; updateMedia uses JSON from EditMediaDialog.
   if (options.body instanceof FormData) {
     delete config.headers['Content-Type'];
   }
