@@ -36,6 +36,7 @@ import ConfirmationDialog from '@components/admin/ConfirmationDialog'
 import TableFilters from './TableFilters'
 import { toast } from 'react-toastify'
 import { adminAPI } from '@/utils/api'
+import { formatDurationSeconds } from '@/utils/string'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -116,7 +117,7 @@ const MediaListTable = ({ mediaData, setAddMediaOpen, setEditMediaOpen, setViewM
         header: 'Duration',
         cell: ({ row }) => (
           <Typography color='text.primary'>
-            {Math.floor((row.original.duration || 0) / 60)} min
+            {formatDurationSeconds(row.original.duration)}
           </Typography>
         )
       }),

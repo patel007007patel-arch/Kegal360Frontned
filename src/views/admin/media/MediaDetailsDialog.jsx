@@ -20,6 +20,7 @@ import { toast } from 'react-toastify'
 
 // Component Imports
 import { adminAPI } from '@/utils/api'
+import { formatDurationSeconds } from '@/utils/string'
 
 const MediaDetailsDialog = ({ open, onClose, media: initialMedia }) => {
   const [media, setMedia] = useState(null)
@@ -105,7 +106,7 @@ const MediaDetailsDialog = ({ open, onClose, media: initialMedia }) => {
               </Typography>
               <Chip label={media.mediaType || '—'} size='small' variant='outlined' />
             </Grid>
-            <DetailRow label='Duration' value={media.duration != null ? `${Math.floor((media.duration || 0) / 60)} min` : '—'} />
+            <DetailRow label='Duration' value={media.duration != null ? formatDurationSeconds(media.duration) : '—'} />
             <DetailRow label='Orientation' value={media.orientation} />
             <DetailRow label='Status' value={media.isActive ? 'Active' : 'Inactive'} type='text' />
             {usageCount !== null && (
