@@ -24,7 +24,7 @@ const buildLoginUrlWithRedirect = (pathname) => {
   return `${loginPath}?${search}`;
 };
 
-const redirectToLoginAndClearToken = () => {
+const forceLogoutAndRedirect = () => {
   if (typeof window === 'undefined') return;
 
    // Avoid redirect loops if multiple API calls fail at once
@@ -38,9 +38,23 @@ const redirectToLoginAndClearToken = () => {
   const isLoginPage = pathname.includes('/login');
   if (!isLoginPage) {
     const target = buildLoginUrlWithRedirect(pathname);
-    window.location.replace
-      ? window.location.replace(target)
-      : (window.location.href = target);
+    const doRedirect = () => {
+      window.location.replace ? window.location.replace(target) : (window.location.href = target);
+    };
+
+    // Also sign out from NextAuth; otherwise server still sees a session and redirects away from login (loop)
+    const timeout = setTimeout(doRedirect, 1500);
+    import('next-auth/react')
+      .then(async (m) => {
+        if (typeof m?.signOut === 'function') {
+          await m.signOut({ redirect: false });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(timeout);
+        doRedirect();
+      });
   }
 };
 
@@ -77,14 +91,14 @@ const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
 
   if (!token) {
-    redirectToLoginAndClearToken();
-    throw new Error('No authentication token available. Please log in again.');
+    forceLogoutAndRedirect();
+    return new Promise(() => {});
   }
 
   // Proactively redirect if token is expired (common "jwt expired" cases)
   if (isJwtExpired(token)) {
-    redirectToLoginAndClearToken();
-    throw new Error('Session expired. Please log in again.');
+    forceLogoutAndRedirect();
+    return new Promise(() => {});
   }
   
   const config = {
@@ -127,7 +141,8 @@ const apiRequest = async (endpoint, options = {}) => {
         msgLower.includes('unauthorized');
 
       if (isAuthError) {
-        redirectToLoginAndClearToken();
+        forceLogoutAndRedirect();
+        return new Promise(() => {});
       }
       const url = `${API_URL}${endpoint}`;
       const msg = response.status === 404 && data.path
