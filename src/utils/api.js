@@ -14,20 +14,69 @@ const getAuthToken = () => {
   return null;
 };
 
+const buildLoginUrlWithRedirect = (pathname) => {
+  const path = pathname || '/';
+  const segments = path.split('/').filter(Boolean);
+  const lang = segments[0] || 'en';
+  const loginPath = `/${lang}/login`;
+  const redirectTo = path;
+  const search = new URLSearchParams({ redirectTo }).toString();
+  return `${loginPath}?${search}`;
+};
+
+const redirectToLoginAndClearToken = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('token');
+  } catch {}
+  const pathname = window.location.pathname || '';
+  const isLoginPage = pathname.includes('/login');
+  if (!isLoginPage) {
+    window.location.href = buildLoginUrlWithRedirect(pathname);
+  }
+};
+
+const parseJwtPayload = (token) => {
+  try {
+    const parts = String(token).split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+};
+
+const isJwtExpired = (token) => {
+  if (typeof window === 'undefined') return false;
+  const payload = parseJwtPayload(token);
+  const exp = payload?.exp;
+  if (!exp || typeof exp !== 'number') return false;
+  // Add a small buffer so we don't race the server by 1-2 seconds
+  const nowSec = Math.floor(Date.now() / 1000);
+  return exp <= nowSec + 5;
+};
+
 // API request helper (requires auth)
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
 
   if (!token) {
-    if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname || '';
-      const isLoginPage = pathname.includes('/login');
-      if (!isLoginPage) {
-        window.location.href = '/login';
-        return;
-      }
-    }
+    redirectToLoginAndClearToken();
     throw new Error('No authentication token available. Please log in again.');
+  }
+
+  // Proactively redirect if token is expired (common "jwt expired" cases)
+  if (isJwtExpired(token)) {
+    redirectToLoginAndClearToken();
+    throw new Error('Session expired. Please log in again.');
   }
   
   const config = {
@@ -60,14 +109,17 @@ const apiRequest = async (endpoint, options = {}) => {
 
     if (!response.ok) {
       // If unauthorized, clear token and redirect to login
-      if (response.status === 401) {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          // Optionally redirect to login
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
-          }
-        }
+      const msgLower = String(data?.message || '').toLowerCase();
+      const isAuthError =
+        response.status === 401 ||
+        response.status === 403 ||
+        msgLower.includes('jwt expired') ||
+        msgLower.includes('token expired') ||
+        msgLower.includes('invalid token') ||
+        msgLower.includes('unauthorized');
+
+      if (isAuthError) {
+        redirectToLoginAndClearToken();
       }
       const url = `${API_URL}${endpoint}`;
       const msg = response.status === 404 && data.path
@@ -288,13 +340,14 @@ export const adminAPI = {
     return apiRequest(`/admin/sessions?${query}`);
   },
   getSessionById: (id) => apiRequest(`/admin/sessions/${id}`),
-  createSession: (data) => apiRequest('/admin/sessions', {
+  createSession: (formData) => apiRequest('/admin/sessions', {
     method: 'POST',
-    body: data,
+    body: formData,
   }),
-  updateSession: (id, data) => apiRequest(`/admin/sessions/${id}`, {
+  updateSession: (id, formData) => apiRequest(`/admin/sessions/${id}`, {
     method: 'PUT',
-    body: data,
+    headers: {},
+    body: formData,
   }),
   deleteSession: (id) => apiRequest(`/admin/sessions/${id}`, {
     method: 'DELETE',

@@ -27,7 +27,6 @@ const EditSessionDialog = ({ open, handleClose, session, onRefresh }) => {
     title: '',
     description: '',
     benefits: [],
-    thumbnail: '',
     difficulty: 'beginner',
     equipment: 'Equipment-free',
     order: 1,
@@ -35,6 +34,7 @@ const EditSessionDialog = ({ open, handleClose, session, onRefresh }) => {
     isFree: true
   })
   const [loading, setLoading] = useState(false)
+  const [thumbnailFile, setThumbnailFile] = useState(null)
 
   useEffect(() => {
     if (session) {
@@ -56,7 +56,25 @@ const EditSessionDialog = ({ open, handleClose, session, onRefresh }) => {
     e.preventDefault()
     try {
       setLoading(true)
-      await adminAPI.updateSession(session._id, formData)
+      const formDataToSend = new FormData()
+      formDataToSend.append('title', formData.title)
+      if (formData.description) formDataToSend.append('description', formData.description)
+      if (Array.isArray(formData.benefits) && formData.benefits.length) {
+        formDataToSend.append('benefits', JSON.stringify(formData.benefits))
+      }
+      formDataToSend.append('difficulty', formData.difficulty)
+      if (formData.equipment) formDataToSend.append('equipment', formData.equipment)
+      formDataToSend.append('order', String(formData.order || 1))
+      formDataToSend.append('isActive', String(formData.isActive))
+      formDataToSend.append('isFree', String(formData.isFree))
+      // If user chose a new file, send it; otherwise keep existing thumbnail URL so backend doesn't clear it
+      if (thumbnailFile) {
+        formDataToSend.append('thumbnail', thumbnailFile)
+      } else if (formData.thumbnail) {
+        formDataToSend.append('thumbnail', formData.thumbnail)
+      }
+
+      await adminAPI.updateSession(session._id, formDataToSend)
       toast.success('Session updated successfully')
       onRefresh()
       handleClose()
@@ -117,9 +135,19 @@ const EditSessionDialog = ({ open, handleClose, session, onRefresh }) => {
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label='Thumbnail URL'
-                value={formData.thumbnail}
-                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                type='file'
+                label='Thumbnail (Optional)'
+                InputLabelProps={{ shrink: true }}
+                onChange={e => {
+                  const file = e.target.files?.[0] || null
+                  setThumbnailFile(file)
+                }}
+                inputProps={{ accept: 'image/*' }}
+                helperText={
+                  thumbnailFile
+                    ? thumbnailFile.name
+                    : (formData.thumbnail ? 'Leave empty to keep current thumbnail' : 'Upload a thumbnail image for this session')
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

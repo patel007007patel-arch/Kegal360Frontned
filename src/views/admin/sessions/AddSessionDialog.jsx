@@ -33,7 +33,6 @@ const defaultFormValues = {
   title: '',
   description: '',
   benefits: [],
-  thumbnail: '',
   difficulty: 'beginner',
   equipment: 'Equipment-free',
   order: 1,
@@ -44,15 +43,21 @@ const defaultFormValues = {
 const AddSessionDialog = ({ open, handleClose, onRefresh, initialSequenceId = null }) => {
   const [loading, setLoading] = useState(false)
   const [sequences, setSequences] = useState([])
+  const [thumbnailFile, setThumbnailFile] = useState(null)
+  const [isOrderManuallyEdited, setIsOrderManuallyEdited] = useState(false)
 
   const {
     control,
     reset: resetForm,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors }
   } = useForm({
     defaultValues: defaultFormValues
   })
+
+  const selectedSequenceId = watch('sequence')
 
   useEffect(() => {
     if (open) {
@@ -60,16 +65,53 @@ const AddSessionDialog = ({ open, handleClose, onRefresh, initialSequenceId = nu
         setSequences(res.data.sequences || [])
       }).catch(() => {})
       resetForm({ ...defaultFormValues, sequence: initialSequenceId || '' })
+      setIsOrderManuallyEdited(false)
     }
   }, [open, initialSequenceId, resetForm])
+
+  // Auto-set next order (max existing + 1) within the selected sequence, unless user edits manually
+  useEffect(() => {
+    if (!open || !selectedSequenceId) return
+    if (isOrderManuallyEdited) return
+
+    adminAPI.getSessions({ sequenceId: selectedSequenceId })
+      .then(res => {
+        const sessions = res?.data?.sessions
+        const list = Array.isArray(sessions) ? sessions : []
+        const maxOrder = list.reduce((max, s) => Math.max(max, Number(s?.order) || 0), 0)
+        const nextOrder = Math.max(1, maxOrder + 1)
+        setValue('order', nextOrder, { shouldDirty: false, shouldTouch: false, shouldValidate: false })
+      })
+      .catch(() => {
+        // ignore – keep default order
+      })
+  }, [open, selectedSequenceId, isOrderManuallyEdited, setValue])
 
   const onSubmit = async (data) => {
     try {
       setLoading(true)
-      await adminAPI.createSession(data)
+      const formData = new FormData()
+      formData.append('sequence', data.sequence)
+      formData.append('sessionType', data.sessionType)
+      formData.append('title', data.title)
+      if (data.description) formData.append('description', data.description)
+      if (Array.isArray(data.benefits) && data.benefits.length) {
+        formData.append('benefits', JSON.stringify(data.benefits))
+      }
+      formData.append('difficulty', data.difficulty)
+      if (data.equipment) formData.append('equipment', data.equipment)
+      formData.append('order', String(data.order || 1))
+      formData.append('isActive', String(data.isActive))
+      formData.append('isFree', String(data.isFree))
+      if (thumbnailFile) {
+        formData.append('thumbnail', thumbnailFile)
+      }
+
+      await adminAPI.createSession(formData)
       toast.success('Session created successfully')
       handleClose()
       resetForm(defaultFormValues)
+      setThumbnailFile(null)
       if (onRefresh) onRefresh()
     } catch (error) {
       toast.error(error.message || 'Error creating session')
@@ -208,23 +250,26 @@ const AddSessionDialog = ({ open, handleClose, onRefresh, initialSequenceId = nu
                     type='number'
                     label='Order'
                     placeholder='1'
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    onChange={(e) => {
+                      setIsOrderManuallyEdited(true)
+                      field.onChange(parseInt(e.target.value) || 1)
+                    }}
                   />
                 )}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Controller
-                name='thumbnail'
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label='Thumbnail URL'
-                    placeholder='https://...'
-                  />
-                )}
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                type='file'
+                label='Thumbnail (Optional)'
+                InputLabelProps={{ shrink: true }}
+                onChange={e => {
+                  const file = e.target.files?.[0] || null
+                  setThumbnailFile(file)
+                }}
+                inputProps={{ accept: 'image/*' }}
+                helperText={thumbnailFile ? thumbnailFile.name : 'Upload a thumbnail image for this session'}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

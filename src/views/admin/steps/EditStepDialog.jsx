@@ -48,12 +48,18 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
   const [loading, setLoading] = useState(false)
   const [mediaLoading, setMediaLoading] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
+  const [uploadingAudio, setUploadingAudio] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
+  const [showAudioUpload, setShowAudioUpload] = useState(false)
   const [videoFile, setVideoFile] = useState(null)
+  const [audioFile, setAudioFile] = useState(null)
   const [videoTitle, setVideoTitle] = useState('')
+  const [audioTitle, setAudioTitle] = useState('')
   const [media, setMedia] = useState([])
 
   const videos = Array.isArray(media) ? media.filter(m => (m.mediaType || '').toLowerCase() === 'video') : []
+  const audios = Array.isArray(media) ? media.filter(m => (m.mediaType || '').toLowerCase() === 'audio') : []
+  const [mediaType, setMediaType] = useState('video')
 
   useEffect(() => {
     if (open) {
@@ -62,8 +68,11 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
         .then(setMedia)
         .finally(() => setMediaLoading(false))
       setShowUpload(false)
+      setShowAudioUpload(false)
       setVideoFile(null)
+      setAudioFile(null)
       setVideoTitle('')
+      setAudioTitle('')
     }
   }, [open])
 
@@ -114,14 +123,37 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
         order: step.order || 1,
         isActive: step.isActive !== undefined ? step.isActive : true
       })
+      if (step.media) {
+        setMediaType('video')
+      } else if (step.audio) {
+        setMediaType('audio')
+      } else {
+        setMediaType('video')
+      }
     }
   }, [step])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      const payload = { ...formData }
+
+      // Backend requires `media`. For "Audio" mode, write selected audio id into `media`.
+      if (mediaType === 'audio') {
+        if (!payload.audio) {
+          toast.error('Please select an audio media item')
+          return
+        }
+        payload.media = payload.audio
+        payload.audio = '' // unset optional audio on backend
+      } else {
+        if (!payload.media) {
+          toast.error('Please select a video media item')
+          return
+        }
+      }
       setLoading(true)
-      await adminAPI.updateStep(step._id, formData)
+      await adminAPI.updateStep(step._id, payload)
       toast.success('Step updated successfully')
       onRefresh()
       handleClose()
@@ -157,95 +189,218 @@ const EditStepDialog = ({ open, handleClose, step, onRefresh }) => {
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Autocomplete
-                fullWidth
-                options={videos}
-                getOptionLabel={(option) => (option && option.title) || ''}
-                value={videos.find(v => v._id === formData.media) || null}
-                onChange={(_, newValue) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    media: newValue ? newValue._id : '',
-                    ...(newValue?.duration != null && { timer: Number(newValue.duration) || 30 })
-                  }))
-                }}
-                loading={mediaLoading}
-                noOptionsText={mediaLoading ? 'Loading videos...' : 'No videos. Add videos in Media Library or upload below.'}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label='Media (Video)'
-                    placeholder='Search or select video'
-                  />
-                )}
-              />
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<i className='ri-upload-line' />}
-                onClick={() => setShowUpload(!showUpload)}
-                sx={{ mt: 2 }}
-              >
-                {showUpload ? 'Cancel Upload' : 'Upload New Video'}
-              </Button>
-              {showUpload && (
-                <Grid container spacing={2} sx={{ mt: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant='subtitle2' gutterBottom>
-                      Upload New Video
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      fullWidth
-                      label='Video Title'
-                      value={videoTitle}
-                      onChange={(e) => setVideoTitle(e.target.value)}
-                      placeholder={formData.title || 'Enter video title'}
-                      helperText='Leave empty to use step title'
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <TextField
-                      fullWidth
-                      type='file'
-                      label='Video File'
-                      InputLabelProps={{ shrink: true }}
-                      onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                      inputProps={{ accept: 'video/*' }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Button
-                      variant='contained'
-                      onClick={handleVideoUpload}
-                      disabled={!videoFile || uploadingVideo}
-                      startIcon={uploadingVideo ? <i className='ri-loader-4-line animate-spin' /> : <i className='ri-upload-line' />}
-                    >
-                      {uploadingVideo ? 'Uploading...' : 'Upload Video'}
-                    </Button>
-                  </Grid>
-                </Grid>
-              )}
-            </Grid>
-            <Grid size={{ xs: 12 }}>
               <FormControl fullWidth>
-                <InputLabel id='audio-label'>Audio (Optional)</InputLabel>
+                <InputLabel id='media-type-label'>Media Type</InputLabel>
                 <Select
-                  label='Audio (Optional)'
-                  labelId='audio-label'
-                  value={formData.audio}
-                  onChange={(e) => setFormData({ ...formData, audio: e.target.value })}
+                  labelId='media-type-label'
+                  label='Media Type'
+                  value={mediaType}
+                  onChange={(e) => setMediaType(e.target.value)}
                 >
-                  <MenuItem value=''>None</MenuItem>
-                  {media.filter(m => m.mediaType === 'audio').map((item) => (
-                    <MenuItem key={item._id} value={item._id}>
-                      {item.title}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value='video'>Video</MenuItem>
+                  <MenuItem value='audio'>Audio</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
+            {mediaType === 'video' && (
+              <Grid size={{ xs: 12 }}>
+                <Autocomplete
+                  fullWidth
+                  options={videos}
+                  getOptionLabel={(option) => (option && option.title) || ''}
+                  value={videos.find(v => v._id === formData.media) || null}
+                  onChange={(_, newValue) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      media: newValue ? newValue._id : '',
+                      ...(newValue?.duration != null && { timer: Number(newValue.duration) || 30 })
+                    }))
+                  }}
+                  loading={mediaLoading}
+                  noOptionsText={mediaLoading ? 'Loading videos...' : 'No videos. Add videos in Media Library or upload below.'}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Media (Video)'
+                      placeholder='Search or select video'
+                    />
+                  )}
+                />
+                <Button
+                  variant='outlined'
+                  size='small'
+                  startIcon={<i className='ri-upload-line' />}
+                  onClick={() => setShowUpload(!showUpload)}
+                  sx={{ mt: 2 }}
+                >
+                  {showUpload ? 'Cancel Upload' : 'Upload New Video'}
+                </Button>
+                {showUpload && (
+                  <Grid
+                    container
+                    spacing={2}
+                    sx={{ mt: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                  >
+                    <Grid size={{ xs: 12 }}>
+                      <Typography variant='subtitle2' gutterBottom>
+                        Upload New Video
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField
+                        fullWidth
+                        label='Video Title'
+                        value={videoTitle}
+                        onChange={(e) => setVideoTitle(e.target.value)}
+                        placeholder={formData.title || 'Enter video title'}
+                        helperText='Leave empty to use step title'
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField
+                        fullWidth
+                        type='file'
+                        label='Video File'
+                        InputLabelProps={{ shrink: true }}
+                        onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                        inputProps={{ accept: 'video/*' }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Button
+                        variant='contained'
+                        onClick={handleVideoUpload}
+                        disabled={!videoFile || uploadingVideo}
+                        startIcon={
+                          uploadingVideo ? (
+                            <i className='ri-loader-4-line animate-spin' />
+                          ) : (
+                            <i className='ri-upload-line' />
+                          )
+                        }
+                      >
+                        {uploadingVideo ? 'Uploading...' : 'Upload Video'}
+                      </Button>
+                    </Grid>
+                  </Grid>
+                )}
+              </Grid>
+            )}
+            {mediaType === 'audio' && (
+              <Grid size={{ xs: 12 }}>
+                <Autocomplete
+                  fullWidth
+                  options={audios}
+                  getOptionLabel={(option) => (option && option.title) || ''}
+                  value={audios.find(a => a._id === formData.audio) || null}
+                  onChange={(_, newValue) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      audio: newValue ? newValue._id : ''
+                    }))
+                  }}
+                  loading={mediaLoading}
+                  noOptionsText={mediaLoading ? 'Loading audio...' : 'No audio found. Upload one below.'}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Audio'
+                      placeholder='Search or select audio'
+                    />
+                  )}
+                />
+                <Button
+                  variant='outlined'
+                  size='small'
+                  startIcon={<i className='ri-upload-line' />}
+                  onClick={() => setShowAudioUpload(!showAudioUpload)}
+                  sx={{ mt: 2 }}
+                >
+                  {showAudioUpload ? 'Cancel Upload' : 'Upload New Audio'}
+                </Button>
+                {showAudioUpload && (
+                  <Grid
+                    container
+                    spacing={2}
+                    sx={{ mt: 1, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+                  >
+                    <Grid size={{ xs: 12 }}>
+                      <Typography variant='subtitle2' gutterBottom>
+                        Upload New Audio
+                      </Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField
+                        fullWidth
+                        label='Audio Title'
+                        value={audioTitle}
+                        onChange={(e) => setAudioTitle(e.target.value)}
+                        placeholder={formData.title || 'Enter audio title'}
+                        helperText='Leave empty to use step title'
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField
+                        fullWidth
+                        type='file'
+                        label='Audio File'
+                        InputLabelProps={{ shrink: true }}
+                        onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+                        inputProps={{ accept: 'audio/*' }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Button
+                        variant='contained'
+                        onClick={async () => {
+                          if (!audioFile) {
+                            toast.error('Please select an audio file')
+                            return
+                          }
+                          try {
+                            setUploadingAudio(true)
+                            const fd = new FormData()
+                            fd.append('video', audioFile)
+                            fd.append('title', audioTitle || formData.title || 'New Audio')
+                            fd.append('mediaType', 'audio')
+                            fd.append('orientation', 'portrait')
+                            fd.append('isActive', 'true')
+                            const response = await adminAPI.createMedia(fd)
+                            const newAudio = response.data?.media
+                            if (newAudio) {
+                              const list = await loadMedia()
+                              setMedia(list)
+                              setFormData(prev => ({
+                                ...prev,
+                                audio: newAudio._id
+                              }))
+                              toast.success('Audio uploaded and selected successfully')
+                              setShowAudioUpload(false)
+                              setAudioFile(null)
+                              setAudioTitle('')
+                            }
+                          } catch (error) {
+                            toast.error(error.message || 'Error uploading audio')
+                          } finally {
+                            setUploadingAudio(false)
+                          }
+                        }}
+                        disabled={!audioFile || uploadingAudio}
+                        startIcon={
+                          uploadingAudio ? (
+                            <i className='ri-loader-4-line animate-spin' />
+                          ) : (
+                            <i className='ri-upload-line' />
+                          )
+                        }
+                      >
+                        {uploadingAudio ? 'Uploading...' : 'Upload Audio'}
+                      </Button>
+                    </Grid>
+                  </Grid>
+                )}
+              </Grid>
+            )}
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth

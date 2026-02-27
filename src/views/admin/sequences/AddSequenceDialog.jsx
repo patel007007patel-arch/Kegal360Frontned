@@ -30,11 +30,14 @@ import { adminAPI } from '@/utils/api'
 const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId = null }) => {
   const [loading, setLoading] = useState(false)
   const [cyclePhases, setCyclePhases] = useState([])
+  const [isOrderManuallyEdited, setIsOrderManuallyEdited] = useState(false)
 
   const {
     control,
     reset: resetForm,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors }
   } = useForm({
     defaultValues: {
@@ -47,6 +50,8 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
       isActive: true
     }
   })
+
+  const selectedCyclePhaseId = watch('cyclePhase')
 
   useEffect(() => {
     if (open) {
@@ -62,8 +67,27 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
         order: 1,
         isActive: true
       })
+      setIsOrderManuallyEdited(false)
     }
   }, [open, initialCyclePhaseId, resetForm])
+
+  // Auto-set next order (max existing + 1) within selected cycle phase, unless user edits manually
+  useEffect(() => {
+    if (!open || !selectedCyclePhaseId) return
+    if (isOrderManuallyEdited) return
+
+    adminAPI.getSequences({ cyclePhaseId: selectedCyclePhaseId })
+      .then(res => {
+        const sequences = res?.data?.sequences
+        const list = Array.isArray(sequences) ? sequences : []
+        const maxOrder = list.reduce((max, s) => Math.max(max, Number(s?.order) || 0), 0)
+        const nextOrder = Math.max(1, maxOrder + 1)
+        setValue('order', nextOrder, { shouldDirty: false, shouldTouch: false, shouldValidate: false })
+      })
+      .catch(() => {
+        // ignore – keep default order
+      })
+  }, [open, selectedCyclePhaseId, isOrderManuallyEdited, setValue])
 
   const onSubmit = async (data) => {
     try {
@@ -192,7 +216,10 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
                     type='number'
                     label='Order'
                     placeholder='1'
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    onChange={(e) => {
+                      setIsOrderManuallyEdited(true)
+                      field.onChange(parseInt(e.target.value) || 1)
+                    }}
                   />
                 )}
               />
