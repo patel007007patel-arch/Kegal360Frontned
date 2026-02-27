@@ -26,13 +26,21 @@ const buildLoginUrlWithRedirect = (pathname) => {
 
 const redirectToLoginAndClearToken = () => {
   if (typeof window === 'undefined') return;
+
+   // Avoid redirect loops if multiple API calls fail at once
+   if (window.__FORCE_LOGIN_REDIRECTING) return;
+   window.__FORCE_LOGIN_REDIRECTING = true;
+
   try {
     localStorage.removeItem('token');
   } catch {}
   const pathname = window.location.pathname || '';
   const isLoginPage = pathname.includes('/login');
   if (!isLoginPage) {
-    window.location.href = buildLoginUrlWithRedirect(pathname);
+    const target = buildLoginUrlWithRedirect(pathname);
+    window.location.replace
+      ? window.location.replace(target)
+      : (window.location.href = target);
   }
 };
 
