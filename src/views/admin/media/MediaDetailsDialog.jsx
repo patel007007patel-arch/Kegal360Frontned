@@ -167,35 +167,46 @@ const MediaDetailsDialog = ({ open, onClose, media: initialMedia }) => {
               )}
             </Grid>
 
-            {thumbnailUrl && (
-              <Grid size={{ xs: 12 }}>
-                <Typography variant='caption' color='text.secondary' display='block' className='mbe-1'>
-                  Thumbnail URL
-                </Typography>
-                <TextField
-                  fullWidth
+            <Grid size={{ xs: 12 }}>
+              <Typography variant='caption' color='text.secondary' display='block' className='mbe-1'>
+                Thumbnail URL
+              </Typography>
+              <TextField
+                fullWidth
+                size='small'
+                value={thumbnailUrl || '—'}
+                readOnly
+                variant='outlined'
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <IconButton
+                          size='small'
+                          onClick={() => copyToClipboard(fullThumbnailUrl || thumbnailUrl, 'Thumbnail URL')}
+                          aria-label='Copy thumbnail URL'
+                          disabled={!thumbnailUrl}
+                        >
+                          <i className='ri-file-copy-line' />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }
+                }}
+              />
+              {thumbnailUrl && (
+                <Button
                   size='small'
-                  value={thumbnailUrl}
-                  readOnly
-                  variant='outlined'
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position='end'>
-                          <IconButton
-                            size='small'
-                            onClick={() => copyToClipboard(fullThumbnailUrl || thumbnailUrl, 'Thumbnail URL')}
-                            aria-label='Copy thumbnail URL'
-                          >
-                            <i className='ri-file-copy-line' />
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }
-                  }}
-                />
-              </Grid>
-            )}
+                  href={fullThumbnailUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='mts-2'
+                  startIcon={<i className='ri-external-link-line' />}
+                >
+                  Open thumbnail
+                </Button>
+              )}
+            </Grid>
 
             {media.createdAt && (
               <DetailRow label='Created' value={media.createdAt} type='date' />

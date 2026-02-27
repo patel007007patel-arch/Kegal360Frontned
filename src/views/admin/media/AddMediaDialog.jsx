@@ -58,7 +58,7 @@ const AddMediaDialog = ({ open, handleClose, onRefresh }) => {
 
       setLoading(true)
       const formData = new FormData()
-      
+
       // Backend uploadVideoAndThumbnail middleware expects 'video' field
       // For now, we'll use 'video' field for all media types (backend can be updated later)
       if (mediaFile) {
@@ -67,7 +67,7 @@ const AddMediaDialog = ({ open, handleClose, onRefresh }) => {
       if (thumbnailFile) {
         formData.append('thumbnail', thumbnailFile)
       }
-      
+
       formData.append('title', data.title)
       formData.append('description', data.description || '')
       formData.append('mediaType', data.mediaType)
