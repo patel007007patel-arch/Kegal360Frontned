@@ -72,14 +72,6 @@ const EditMediaDialog = ({ open, handleClose, media, onRefresh }) => {
       if (newMediaFile) fd.append('video', newMediaFile)
       if (newThumbnailFile) fd.append('thumbnail', newThumbnailFile)
 
-      console.log('\\n--- Frontend Log: Sending Media Data (EDIT) ---')
-      console.log('newThumbnailFile object:', newThumbnailFile)
-      console.log('newMediaFile object:', newMediaFile)
-      for (let [key, value] of fd.entries()) {
-        console.log(`FormData Entry - ${key}:`, value)
-      }
-      console.log('-----------------------------------------------\\n')
-
       await adminAPI.updateMedia(media._id, fd)
       toast.success('Media updated successfully')
       onRefresh()

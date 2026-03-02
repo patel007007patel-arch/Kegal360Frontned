@@ -28,6 +28,7 @@ const EditSequenceDialog = ({ open, handleClose, sequence, onRefresh }) => {
     isActive: true
   })
   const [loading, setLoading] = useState(false)
+  const [thumbnailFile, setThumbnailFile] = useState(null)
 
   useEffect(() => {
     if (sequence) {
@@ -46,7 +47,21 @@ const EditSequenceDialog = ({ open, handleClose, sequence, onRefresh }) => {
     e.preventDefault()
     try {
       setLoading(true)
-      await adminAPI.updateSequence(sequence._id, formData)
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('displayName', formData.displayName)
+      if (formData.description) formDataToSend.append('description', formData.description)
+      formDataToSend.append('order', String(formData.order || 1))
+      formDataToSend.append('isActive', String(formData.isActive))
+
+      // If user chose a new file, send it; otherwise keep existing thumbnail URL so backend doesn't clear it
+      if (thumbnailFile) {
+        formDataToSend.append('thumbnail', thumbnailFile)
+      } else if (formData.thumbnail) {
+        formDataToSend.append('thumbnail', formData.thumbnail)
+      }
+
+      await adminAPI.updateSequence(sequence._id, formDataToSend)
       toast.success('Sequence updated successfully')
       onRefresh()
       handleClose()
@@ -92,9 +107,19 @@ const EditSequenceDialog = ({ open, handleClose, sequence, onRefresh }) => {
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
-                label='Thumbnail URL'
-                value={formData.thumbnail}
-                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                type='file'
+                label='Thumbnail (Optional)'
+                InputLabelProps={{ shrink: true }}
+                onChange={e => {
+                  const file = e.target.files?.[0] || null
+                  setThumbnailFile(file)
+                }}
+                inputProps={{ accept: 'image/*' }}
+                helperText={
+                  thumbnailFile
+                    ? thumbnailFile.name
+                    : (formData.thumbnail ? 'Leave empty to keep current thumbnail' : 'Upload a thumbnail image for this sequence')
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

@@ -30,6 +30,7 @@ import { adminAPI } from '@/utils/api'
 const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId = null }) => {
   const [loading, setLoading] = useState(false)
   const [cyclePhases, setCyclePhases] = useState([])
+  const [thumbnailFile, setThumbnailFile] = useState(null)
   const [isOrderManuallyEdited, setIsOrderManuallyEdited] = useState(false)
 
   const {
@@ -45,7 +46,6 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
       name: '',
       displayName: '',
       description: '',
-      thumbnail: '',
       order: 1,
       isActive: true
     }
@@ -57,16 +57,16 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
     if (open) {
       adminAPI.getCyclePhases().then(res => {
         setCyclePhases(res.data.cyclePhases || [])
-      }).catch(() => {})
+      }).catch(() => { })
       resetForm({
         cyclePhase: initialCyclePhaseId || '',
         name: '',
         displayName: '',
         description: '',
-        thumbnail: '',
         order: 1,
         isActive: true
       })
+      setThumbnailFile(null)
       setIsOrderManuallyEdited(false)
     }
   }, [open, initialCyclePhaseId, resetForm])
@@ -92,10 +92,22 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
   const onSubmit = async (data) => {
     try {
       setLoading(true)
-      await adminAPI.createSequence(data)
+      const formData = new FormData()
+      formData.append('cyclePhase', data.cyclePhase)
+      formData.append('name', data.name)
+      formData.append('displayName', data.displayName)
+      if (data.description) formData.append('description', data.description)
+      formData.append('order', String(data.order || 1))
+      formData.append('isActive', String(data.isActive))
+      if (thumbnailFile) {
+        formData.append('thumbnail', thumbnailFile)
+      }
+
+      await adminAPI.createSequence(formData)
       toast.success('Sequence created successfully')
       handleClose()
-      resetForm({ cyclePhase: '', name: '', displayName: '', description: '', thumbnail: '', order: 1, isActive: true })
+      resetForm({ cyclePhase: '', name: '', displayName: '', description: '', order: 1, isActive: true })
+      setThumbnailFile(null)
       if (onRefresh) onRefresh()
     } catch (error) {
       toast.error(error.message || 'Error creating sequence')
@@ -192,17 +204,17 @@ const AddSequenceDialog = ({ open, handleClose, onRefresh, initialCyclePhaseId =
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Controller
-                name='thumbnail'
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label='Thumbnail URL'
-                    placeholder='https://...'
-                  />
-                )}
+              <TextField
+                fullWidth
+                type='file'
+                label='Thumbnail (Optional)'
+                InputLabelProps={{ shrink: true }}
+                onChange={e => {
+                  const file = e.target.files?.[0] || null
+                  setThumbnailFile(file)
+                }}
+                inputProps={{ accept: 'image/*' }}
+                helperText={thumbnailFile ? thumbnailFile.name : 'Upload a thumbnail image for this sequence'}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
