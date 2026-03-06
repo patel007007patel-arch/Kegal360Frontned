@@ -171,7 +171,7 @@ const SubscriptionListTable = ({ tableData, onRefresh }) => {
             size='small'
             color={
               row.original.plan === 'yearly' ? 'primary' :
-              row.original.plan === 'monthly' ? 'success' : 'default'
+                row.original.plan === 'monthly' ? 'success' : 'default'
             }
             className='capitalize'
           />
@@ -281,108 +281,108 @@ const SubscriptionListTable = ({ tableData, onRefresh }) => {
 
   return (
     <>
-    <Card>
-      <CardHeader title='Filters' className='pbe-4' />
-      <TableFilters setData={setFilteredData} tableData={data} />
-      <Divider />
-      <div className='flex justify-between gap-4 p-5 flex-col items-start sm:flex-row sm:items-center'>
-        <Button
-          color='secondary'
-          variant='outlined'
-          startIcon={<i className='ri-upload-2-line' />}
-          className='max-sm:is-full'
-        >
-          Export
-        </Button>
-        <div className='flex items-center gap-x-4 max-sm:gap-y-4 flex-col max-sm:is-full sm:flex-row'>
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search Subscriptions'
+      <Card>
+        <CardHeader title='Filters' className='pbe-4' />
+        <TableFilters setData={setFilteredData} tableData={data} />
+        <Divider />
+        <div className='flex justify-between gap-4 p-5 flex-col items-start sm:flex-row sm:items-center'>
+          <Button
+            color='secondary'
+            variant='outlined'
+            startIcon={<i className='ri-upload-2-line' />}
             className='max-sm:is-full'
-          />
+          >
+            Export
+          </Button>
+          <div className='flex items-center gap-x-4 max-sm:gap-y-4 flex-col max-sm:is-full sm:flex-row'>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={value => setGlobalFilter(String(value))}
+              placeholder='Search Subscriptions'
+              className='max-sm:is-full'
+            />
+          </div>
         </div>
-      </div>
-      <div className='overflow-x-auto'>
-        <table className={tableStyles.table}>
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <>
-                        <div
-                          className={classnames({
-                            'flex items-center': header.column.getIsSorted(),
-                            'cursor-pointer select-none': header.column.getCanSort()
-                          })}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <i className='ri-arrow-up-s-line text-xl' />,
-                            desc: <i className='ri-arrow-down-s-line text-xl' />
-                          }[header.column.getIsSorted()] ?? null}
-                        </div>
-                      </>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          {table.getFilteredRowModel().rows.length === 0 ? (
-            <tbody>
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                  No data available
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody>
-              {table
-                .getRowModel()
-                .rows.slice(0, table.getState().pagination.pageSize)
-                .map(row => {
-                  return (
-                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                      {row.getVisibleCells().map(cell => (
-                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                      ))}
-                    </tr>
-                  )
-                })}
-            </tbody>
-          )}
-        </table>
-      </div>
-      <TablePagination
-        rowsPerPageOptions={[10, 25, 50]}
-        component='div'
-        className='border-bs'
-        count={table.getFilteredRowModel().rows.length}
-        rowsPerPage={table.getState().pagination.pageSize}
-        page={table.getState().pagination.pageIndex}
-        SelectProps={{
-          inputProps: { 'aria-label': 'rows per page' }
-        }}
-        onPageChange={(_, page) => {
-          table.setPageIndex(page)
-        }}
-        onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+        <div className='overflow-x-auto'>
+          <table className={tableStyles.table}>
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id}>
+                      {header.isPlaceholder ? null : (
+                        <>
+                          <div
+                            className={classnames({
+                              'flex items-center': header.column.getIsSorted(),
+                              'cursor-pointer select-none': header.column.getCanSort()
+                            })}
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{
+                              asc: <i className='ri-arrow-up-s-line text-xl' />,
+                              desc: <i className='ri-arrow-down-s-line text-xl' />
+                            }[header.column.getIsSorted()] ?? null}
+                          </div>
+                        </>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            {table.getFilteredRowModel().rows.length === 0 ? (
+              <tbody>
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                    No data available
+                  </td>
+                </tr>
+              </tbody>
+            ) : (
+              <tbody>
+                {table
+                  .getRowModel()
+                  .rows.slice(0, table.getState().pagination.pageSize)
+                  .map(row => {
+                    return (
+                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                        ))}
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            )}
+          </table>
+        </div>
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50]}
+          component='div'
+          className='border-bs'
+          count={table.getFilteredRowModel().rows.length}
+          rowsPerPage={table.getState().pagination.pageSize}
+          page={table.getState().pagination.pageIndex}
+          SelectProps={{
+            inputProps: { 'aria-label': 'rows per page' }
+          }}
+          onPageChange={(_, page) => {
+            table.setPageIndex(page)
+          }}
+          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+        />
+      </Card>
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        setOpen={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title='Delete Subscription'
+        message={`Are you sure you want to delete this subscription? This action cannot be undone.`}
+        confirmText='Yes, Delete Subscription!'
+        type='delete'
       />
-    </Card>
-    <ConfirmationDialog
-      open={deleteDialogOpen}
-      setOpen={setDeleteDialogOpen}
-      onConfirm={handleDelete}
-      title='Delete Subscription'
-      message={`Are you sure you want to delete this subscription? This action cannot be undone.`}
-      confirmText='Yes, Delete Subscription!'
-      type='delete'
-    />
     </>
   )
 }

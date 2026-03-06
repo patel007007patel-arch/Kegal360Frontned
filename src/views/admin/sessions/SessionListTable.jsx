@@ -41,15 +41,15 @@ function groupSessionsBySequence(sessions, sequences) {
   seqList.forEach(seq => {
     bySeq[seq._id] = { sequence: seq, sessions: [] }
   })
-  ;(sessions || []).forEach(sess => {
-    const seqId = sess.sequence?._id || sess.sequence
-    if (seqId && bySeq[seqId]) {
-      bySeq[seqId].sessions.push(sess)
-    } else if (seqId && !seqIds.has(seqId)) {
-      if (!bySeq[seqId]) bySeq[seqId] = { sequence: { _id: seqId, displayName: sess.sequence?.displayName || 'Unknown', name: sess.sequence?.name }, sessions: [] }
-      bySeq[seqId].sessions.push(sess)
-    }
-  })
+    ; (sessions || []).forEach(sess => {
+      const seqId = sess.sequence?._id || sess.sequence
+      if (seqId && bySeq[seqId]) {
+        bySeq[seqId].sessions.push(sess)
+      } else if (seqId && !seqIds.has(seqId)) {
+        if (!bySeq[seqId]) bySeq[seqId] = { sequence: { _id: seqId, displayName: sess.sequence?.displayName || 'Unknown', name: sess.sequence?.name }, sessions: [] }
+        bySeq[seqId].sessions.push(sess)
+      }
+    })
   return seqList.length
     ? seqList.map(seq => ({ sequence: seq, sessions: bySeq[seq._id]?.sessions || [] }))
     : Object.values(bySeq)
@@ -222,29 +222,31 @@ const SessionListTable = ({
                 }}
               >
                 <AccordionSummary expandIcon={<i className='ri-arrow-down-s-line text-xl' />}>
-                  <div className='flex items-center gap-3'>
-                    <i className='ri-folder-3-line text-2xl text-primary' />
-                    <Typography variant='subtitle1' fontWeight={600}>
+                  <div className='flex items-center gap-2 sm:gap-3 is-full overflow-hidden'>
+                    <i className='ri-folder-3-line text-2xl text-primary flex-shrink-0' />
+                    <Typography variant='subtitle1' fontWeight={600} className='truncate max-sm:max-w-[100px]'>
                       {sequence.displayName || sequence.name}
                     </Typography>
                     {phaseName && (
-                      <Chip size='small' label={phaseName} variant='tonal' color='secondary' />
+                      <Chip size='small' label={phaseName} variant='tonal' color='secondary' className='max-sm:hidden' />
                     )}
                     <Chip
                       size='small'
-                      label={`${sessions.length} session${sessions.length !== 1 ? 's' : ''}`}
+                      label={`${sessions.length} sess`}
                       variant='outlined'
+                      className='max-sm:hidden'
                     />
                     <Button
                       size='small'
                       variant='text'
+                      className='whitespace-nowrap mis-auto flex-shrink-0 pl-1'
                       onClick={e => {
                         e.stopPropagation()
                         setInitialSequenceId(seqId)
                         setAddSessionOpen(true)
                       }}
                     >
-                      {sessions.length === 0 ? 'Add first session' : 'Add session'}
+                      {sessions.length === 0 ? 'Add first' : 'Add session'}
                     </Button>
                   </div>
                 </AccordionSummary>
@@ -285,9 +287,9 @@ const SessionListTable = ({
                                   <td key={col.id}>
                                     {col.cell
                                       ? col.cell({
-                                          row: { original: sess, id: sess._id },
-                                          getValue: () => sess[col.accessorKey || col.id]
-                                        })
+                                        row: { original: sess, id: sess._id },
+                                        getValue: () => sess[col.accessorKey || col.id]
+                                      })
                                       : null}
                                   </td>
                                 ))}

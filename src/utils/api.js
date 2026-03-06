@@ -27,13 +27,13 @@ const buildLoginUrlWithRedirect = (pathname) => {
 const forceLogoutAndRedirect = () => {
   if (typeof window === 'undefined') return;
 
-   // Avoid redirect loops if multiple API calls fail at once
-   if (window.__FORCE_LOGIN_REDIRECTING) return;
-   window.__FORCE_LOGIN_REDIRECTING = true;
+  // Avoid redirect loops if multiple API calls fail at once
+  if (window.__FORCE_LOGIN_REDIRECTING) return;
+  window.__FORCE_LOGIN_REDIRECTING = true;
 
   try {
     localStorage.removeItem('token');
-  } catch {}
+  } catch { }
   const pathname = window.location.pathname || '';
   const isLoginPage = pathname.includes('/login');
   if (!isLoginPage) {
@@ -50,7 +50,7 @@ const forceLogoutAndRedirect = () => {
           await m.signOut({ redirect: false });
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         clearTimeout(timeout);
         doRedirect();
@@ -92,15 +92,15 @@ const apiRequest = async (endpoint, options = {}) => {
 
   if (!token) {
     forceLogoutAndRedirect();
-    return new Promise(() => {});
+    return new Promise(() => { });
   }
 
   // Proactively redirect if token is expired (common "jwt expired" cases)
   if (isJwtExpired(token)) {
     forceLogoutAndRedirect();
-    return new Promise(() => {});
+    return new Promise(() => { });
   }
-  
+
   const config = {
     method: options.method || 'GET',
     headers: {
@@ -142,7 +142,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
       if (isAuthError) {
         forceLogoutAndRedirect();
-        return new Promise(() => {});
+        return new Promise(() => { });
       }
       const url = `${API_URL}${endpoint}`;
       const msg = response.status === 404 && data.path
@@ -161,7 +161,7 @@ const apiRequest = async (endpoint, options = {}) => {
 // Public API request helper (no auth required)
 const publicApiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken(); // Optional - include if available
-  
+
   const config = {
     method: options.method || 'GET',
     headers: {
@@ -439,6 +439,46 @@ export const adminAPI = {
     body: formData,
   }),
   deleteMedia: (id) => apiRequest(`/admin/media/${id}`, {
+    method: 'DELETE',
+  }),
+
+  // Meditations
+  getMeditations: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/admin/meditations?${query}`);
+  },
+  getMeditationById: (id) => apiRequest(`/admin/meditations/${id}`),
+  createMeditation: (formData) => {
+    const token = getAuthToken();
+    return fetch(`${API_URL}/admin/meditations`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    }).then(async (response) => {
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? 'Invalid response from server' : (text || 'Upload failed'));
+      }
+      if (!response.ok) {
+        throw new Error(data.message || `Upload failed (${response.status})`);
+      }
+      return data;
+    }).catch((error) => {
+      console.error('API Error:', error);
+      throw error;
+    });
+  },
+  updateMeditation: (id, formData) => apiRequest(`/admin/meditations/${id}`, {
+    method: 'PUT',
+    headers: {},
+    body: formData,
+  }),
+  deleteMeditation: (id) => apiRequest(`/admin/meditations/${id}`, {
     method: 'DELETE',
   }),
 

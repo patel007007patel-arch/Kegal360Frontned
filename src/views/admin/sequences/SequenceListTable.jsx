@@ -41,12 +41,12 @@ function groupSequencesByPhase(sequences, cyclePhases) {
   phaseList.forEach(phase => {
     byPhase[phase._id] = { phase, sequences: [] }
   })
-  ;(sequences || []).forEach(seq => {
-    const phaseId = seq.cyclePhase?._id || seq.cyclePhase
-    if (phaseId && byPhase[phaseId]) {
-      byPhase[phaseId].sequences.push(seq)
-    }
-  })
+    ; (sequences || []).forEach(seq => {
+      const phaseId = seq.cyclePhase?._id || seq.cyclePhase
+      if (phaseId && byPhase[phaseId]) {
+        byPhase[phaseId].sequences.push(seq)
+      }
+    })
   return phaseList.map(p => ({ phase: p, sequences: byPhase[p._id]?.sequences || [] }))
 }
 
@@ -220,22 +220,23 @@ const SequenceListTable = ({
                 sx={{ boxShadow: 'none', '&:before': { display: 'none' }, borderBottom: '1px solid', borderColor: 'divider' }}
               >
                 <AccordionSummary expandIcon={<i className='ri-arrow-down-s-line text-xl' />}>
-                  <div className='flex items-center gap-3'>
-                    <i className='ri-folder-3-line text-2xl text-primary' />
-                    <Typography variant='subtitle1' fontWeight={600}>
+                  <div className='flex items-center gap-2 sm:gap-3 is-full overflow-hidden'>
+                    <i className='ri-folder-3-line text-2xl text-primary flex-shrink-0' />
+                    <Typography variant='subtitle1' fontWeight={600} className='truncate max-sm:max-w-[100px]'>
                       {phase.displayName || phase.name}
                     </Typography>
-                    <Chip size='small' label={`${sequences.length} sequence${sequences.length !== 1 ? 's' : ''}`} variant='outlined' />
+                    <Chip size='small' label={`${sequences.length} seqs`} variant='outlined' className='max-sm:hidden' />
                     <Button
                       size='small'
                       variant='text'
+                      className='whitespace-nowrap mis-auto flex-shrink-0 pl-1'
                       onClick={e => {
                         e.stopPropagation()
                         setInitialCyclePhaseId(phaseId)
                         setAddSequenceOpen(true)
                       }}
                     >
-                      {sequences.length === 0 ? 'Add first sequence' : 'Add sequence'}
+                      {sequences.length === 0 ? 'Add first' : 'Add sequence'}
                     </Button>
                   </div>
                 </AccordionSummary>
@@ -276,9 +277,9 @@ const SequenceListTable = ({
                                   <td key={col.id}>
                                     {col.cell
                                       ? col.cell({
-                                          row: { original: seq, id: seq._id },
-                                          getValue: () => seq[col.accessorKey || col.id]
-                                        })
+                                        row: { original: seq, id: seq._id },
+                                        getValue: () => seq[col.accessorKey || col.id]
+                                      })
                                       : null}
                                   </td>
                                 ))}

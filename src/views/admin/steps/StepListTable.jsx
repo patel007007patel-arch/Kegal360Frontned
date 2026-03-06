@@ -39,12 +39,12 @@ function groupStepsBySession(steps, sessions) {
   sessList.forEach(sess => {
     bySession[sess._id] = { session: sess, steps: [] }
   })
-  ;(steps || []).forEach(step => {
-    const sessId = step.session?._id || step.session
-    if (sessId && bySession[sessId]) {
-      bySession[sessId].steps.push(step)
-    }
-  })
+    ; (steps || []).forEach(step => {
+      const sessId = step.session?._id || step.session
+      if (sessId && bySession[sessId]) {
+        bySession[sessId].steps.push(step)
+      }
+    })
   return sessList.map(sess => ({
     session: sess,
     steps: bySession[sess._id]?.steps || []
@@ -212,29 +212,31 @@ const StepListTable = ({
                 }}
               >
                 <AccordionSummary expandIcon={<i className='ri-arrow-down-s-line text-xl' />}>
-                  <div className='flex items-center gap-3'>
-                    <i className='ri-folder-3-line text-2xl text-primary' />
-                    <Typography variant='subtitle1' fontWeight={600}>
+                  <div className='flex items-center gap-2 sm:gap-3 is-full overflow-hidden'>
+                    <i className='ri-folder-3-line text-2xl text-primary flex-shrink-0' />
+                    <Typography variant='subtitle1' fontWeight={600} className='truncate max-sm:max-w-[100px]'>
                       {session.title}
                     </Typography>
                     {seqName && (
-                      <Chip size='small' label={seqName} variant='tonal' color='secondary' />
+                      <Chip size='small' label={seqName} variant='tonal' color='secondary' className='max-sm:hidden' />
                     )}
                     <Chip
                       size='small'
-                      label={`${steps.length} step${steps.length !== 1 ? 's' : ''}`}
+                      label={`${steps.length} steps`}
                       variant='outlined'
+                      className='max-sm:hidden'
                     />
                     <Button
                       size='small'
                       variant='text'
+                      className='whitespace-nowrap mis-auto flex-shrink-0 pl-1'
                       onClick={e => {
                         e.stopPropagation()
                         setInitialSessionId(sessId)
                         setAddStepOpen(true)
                       }}
                     >
-                      {steps.length === 0 ? 'Add first step' : 'Add step'}
+                      {steps.length === 0 ? 'Add first' : 'Add step'}
                     </Button>
                   </div>
                 </AccordionSummary>
@@ -275,9 +277,9 @@ const StepListTable = ({
                                   <td key={col.id}>
                                     {col.cell
                                       ? col.cell({
-                                          row: { original: step, id: step._id },
-                                          getValue: () => step[col.accessorKey || col.id]
-                                        })
+                                        row: { original: step, id: step._id },
+                                        getValue: () => step[col.accessorKey || col.id]
+                                      })
                                       : null}
                                   </td>
                                 ))}
