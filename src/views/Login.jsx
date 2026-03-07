@@ -16,6 +16,7 @@ import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Alert from '@mui/material/Alert'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Third-party Imports
 import { signIn, getSession } from 'next-auth/react'
@@ -50,6 +51,7 @@ const Login = ({ mode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-1-dark.png'
@@ -93,7 +95,8 @@ const Login = ({ mode }) => {
 
   const onSubmit = async data => {
     setErrorState(null) // Clear previous errors
-    
+    setIsLoading(true)
+
     try {
       const res = await signIn('credentials', {
         email: data.email,
@@ -108,7 +111,7 @@ const Login = ({ mode }) => {
           // Store backend token in localStorage for API calls
           localStorage.setItem('token', session.backendToken)
         }
-        
+
         // Admin users always go to admin dashboard; others use redirectTo or home
         const isAdmin = session?.user?.role === 'admin'
         const redirectURL = isAdmin
@@ -117,6 +120,7 @@ const Login = ({ mode }) => {
 
         router.replace(getLocalizedUrl(redirectURL, locale))
       } else {
+        setIsLoading(false)
         if (res?.error) {
           try {
             const error = JSON.parse(res.error)
@@ -133,6 +137,7 @@ const Login = ({ mode }) => {
         }
       }
     } catch (error) {
+      setIsLoading(false)
       setErrorState({
         message: error.message || 'An error occurred during login.'
       })
@@ -169,15 +174,15 @@ const Login = ({ mode }) => {
           </div>
           {errorState && (
             <Alert severity='error' onClose={() => setErrorState(null)}>
-              {Array.isArray(errorState.message) 
-                ? errorState.message.join(', ') 
+              {Array.isArray(errorState.message)
+                ? errorState.message.join(', ')
                 : errorState.message || 'Login failed. Please try again.'}
             </Alert>
           )}
 
           <form
             noValidate
-            action={() => {}}
+            action={() => { }}
             autoComplete='off'
             onSubmit={handleSubmit(onSubmit)}
             className='flex flex-col gap-5'
@@ -251,8 +256,8 @@ const Login = ({ mode }) => {
                 Forgot password?
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'>
-              Log In
+            <Button fullWidth variant='contained' type='submit' disabled={isLoading}>
+              {isLoading ? <CircularProgress size={24} color='inherit' /> : 'Log In'}
             </Button>
           </form>
         </div>
